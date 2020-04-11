@@ -4,7 +4,7 @@
 # Final Project: ShinDor Soccer
 # By: Alejandro Ruiz
 #####################################################################################
-#TO BE FINISHED
+
 
 import pygame
 import os
@@ -78,15 +78,13 @@ class Button(object):
     def pressedButton(self):
         for event in pygame.event.get():
 
-            mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
-        
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if(event.type == pygame.MOUSEBUTTONDOWN):
+                mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+
                 #now check that the mouseCoordX and mouseCoordY are in the range of the rectangle we drew
                 if ((mouseCoordX >= self.x and mouseCoordX <= self.x + self.width) and 
                 (mouseCoordY >= self.y and mouseCoordY <= self.y + self.height)):
                     self.pressed = True
-                    return self.pressed
-        return self.pressed
                 #check if the mouse coordinates are inside the button range. If it is the button has been pressed
 
 class Ball(object):
@@ -596,7 +594,6 @@ def checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, 
     soccer.checkFor1stPlayerGoal(player, widthScreen, heightScreen, goalWidth, goalHeight)
     soccer.checkForGuestPlayerGoal(guestPlayer, widthScreen, heightScreen, goalWidth, goalHeight)
     
-
     player.checkBallNotMoving(guestPlayer, soccer, epsilon, heightScreen)
 
 #############################################
@@ -610,16 +607,13 @@ def createStartPlaying2PlayerButton():
     heightstartButton = 55
     xCenterTextButton = 375
     yCenterTextButton = 525
-    black = (0,0,0)
-    white = (255, 255, 255)
     green = (0, 255, 0)
     buttonColor = (0, 0, 128)
     textPlayingButton = "2 Player"
-    widthButton = 100
-    heightButton = 100
     fontButton = pygame.font.Font('freesansbold.ttf', 28)
+    pressed = False
     #create the button and return it
-    startPlaying2PlayerButton = Button(xstartButton, ystartButton, widthstartButton, heightstartButton, fontButton, green, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressedButton)
+    startPlaying2PlayerButton = Button(xstartButton, ystartButton, widthstartButton, heightstartButton, fontButton, green, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
     return startPlaying2PlayerButton
 
 #################################################
@@ -637,17 +631,16 @@ def createButtonAI():
     green = (0, 255, 0)
     buttonColor = (0, 0, 128)
     textPlayingButton = "Single Player"
-    widthButton = 100
-    heightButton = 100
     fontButton = pygame.font.Font('freesansbold.ttf', 25)
+    pressed = False
     #create the button and return it
-    startPlayingAIButton = Button(xstartButton, ystartButton, widthstartButton, heightstartButton, fontButton, green, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressedButton)
+    startPlayingAIButton = Button(xstartButton, ystartButton, widthstartButton, heightstartButton, fontButton, green, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
     return startPlayingAIButton
 
 ##############################################
 #This function displays the first screen######
 ##############################################
-def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton):
+def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg):
 
     introScreen = pygame.display.set_mode((widthScreen, heightScreen))
     firstDisplay = True
@@ -666,6 +659,7 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
         
         elif startPlayingAIButton.pressed:
             firstDisplay = False
+            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg)
 
         for event in pygame.event.get():
             startPlaying2PlayerButton.pressedButton()
@@ -691,8 +685,69 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
 ###################################################################
 #Create the screen that will be popped if we select "Single Player"
 ###################################################################
-def createScreenSinglePlayer():
+def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg):
+    singlePlayerScreen = True
 
+    while singlePlayerScreen:
+        clock.tick(1000)
+
+
+        keyPressed = pygame.key.get_pressed()
+        #this makes sure the player can move continously so that we do not have to press the key multiple times
+        if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen:   #the purpose of the and is to ensure the player does not go outside of the right bound
+            player.x += 6                  #0.15
+            player.rectangleX = player.x
+        
+        if keyPressed[pygame.K_LEFT] and player.x >= 0:         #the purpose of the and is to ensure the player does not go outside of the left bound
+            player.x -= 6                       #0.15
+            player.rectangleX = player.x
+        
+        if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
+            player.jumping = True
+        
+        if player.jumping:
+            player.jump(soccer)
+
+        #make sure we check for all our collisions and goals, etc
+        checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
+
+        #make sure the user can exit out of the game by pressing the top left exit button
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                singlePlayerScreen = False
+                pygame.quit()  	# ensures pygame module closes properly
+                os._exit(0)	    # ensure the window closes
+
+        screen.blit(pygame.image.load("Day Background.png"), (0,0))
+
+        #######################################
+        black = (0,0,0)
+        green = (0, 255, 0)
+        #rectangle for debugging purposes
+        #rectangle of player1 and ellipse
+        pygame.draw.rect(screen, black,(player.x + 18, player.y + 25, player.width - 38, player.height  - 28),5)
+        pygame.draw.ellipse(screen, green, (player.x + 7, player.y + 5, player.width - 16, player.height - 55), 4)
+
+        #rectangle of guestPlayer and ellipse
+        pygame.draw.rect(screen, black, (guestPlayer.x + 6, guestPlayer.y + 50, guestPlayer.width - 23, guestPlayer.height - 47), 5)
+        pygame.draw.ellipse(screen, green, (guestPlayer.x - 5, guestPlayer.y - 5, guestPlayer.width + 2 , guestPlayer.height - 35), 4)
+        ######################################
+
+        ##############################################
+        #The following lines update the current position of the objects
+        ##############################################
+        screen.blit(soccerImg, (soccer.x, soccer.y))
+        screen.blit(playerImg, (player.x, player.y))
+        screen.blit(guestPlayerImg, (guestPlayer.x, guestPlayer.y))
+        screen.blit(goalLeftImg, (0, heightScreen - goalHeight))
+        screen.blit(goalRightImg, (widthScreen - goalWidth, heightScreen - goalHeight))
+        createGoalCount(player, guestPlayer, screen, widthScreen)
+        pygame.display.flip()
+
+
+##################################################
+#Keeps track of the number of goals of each player
+##################################################
 def createGoalCount(player, guestPlayer, screen, widthScreen):
     goalDisplay = pygame.image.load("Show Score.png")
     numberLeft = guestPlayer.goalCount
@@ -708,7 +763,12 @@ def createGoalCount(player, guestPlayer, screen, widthScreen):
     screen.blit(scoreTextLeft, scoreTextLeftRectangle)
 
 
-#Game loop
+###################################################
+###################################################
+############## MAIN GAME LOOP #####################
+###################################################
+###################################################
+
 runPygame = True
 firstRun = True
 
@@ -716,22 +776,26 @@ while runPygame:
     if firstRun:
         startPlaying2PlayerButton = createStartPlaying2PlayerButton()
         startPlayingAIButton = createButtonAI()
+
     # initial screen
-    if not startPlaying2PlayerButton.pressed:
-        firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton)
- 
+    if not startPlaying2PlayerButton.pressed and not startPlayingAIButton.pressed:
+        firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg)
+
+    elif startPlayingAIButton.pressed:
+        createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg)
+
     clock.tick(10000)
 
     keyPressed = pygame.key.get_pressed() #gets the key that it is being pressed
 
     #this makes sure the player can move continously so that we do not have to press the key multiple times
 
-    if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen:   #the purpose of the and is to ensure the player does not go outside of the right bound
+    if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
         player.x += 6                  #0.15
         player.rectangleX = player.x
     
     
-    if keyPressed[pygame.K_LEFT] and player.x >= 0:         #the purpose of the and is to ensure the player does not go outside of the left bound
+    if keyPressed[pygame.K_LEFT] and player.x >= goalWidth - player.width + 20:         #the purpose of the and is to ensure the player does not go outside of the left bound
         player.x -= 6                       #0.15
         player.rectangleX = player.x
     
@@ -743,10 +807,10 @@ while runPygame:
 
     #To move the guest player... 
 
-    if keyPressed[pygame.K_s] and guestPlayer.x + guestPlayer.width <= widthScreen:   #the purpose of the and is to ensure the player does not go outside of the right bound
+    if keyPressed[pygame.K_s] and guestPlayer.x + guestPlayer.width <= widthScreen - goalWidth + guestPlayer.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
         guestPlayer.x += 8
     
-    if keyPressed[pygame.K_a] and guestPlayer.x >= 0:          #the purpose of this and is to ensure the player does not go outside of the left bound                                 
+    if keyPressed[pygame.K_a] and guestPlayer.x >= goalWidth - guestPlayer.width + 20:          #the purpose of this and is to ensure the player does not go outside of the left bound                                 
         guestPlayer.x -= 8
     
     if not guestPlayer.jumping and keyPressed[pygame.K_SPACE]: 
