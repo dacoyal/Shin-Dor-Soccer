@@ -4,8 +4,7 @@
 # Final Project: ShinDor Soccer
 # By: Alejandro Ruiz
 #####################################################################################
-
-#pygame.sprite.collide_mask
+#TO BE FINISHED
 
 import pygame
 import os
