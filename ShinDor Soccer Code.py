@@ -4,7 +4,7 @@
 # Final Project: ShinDor Soccer
 # By: Alejandro Ruiz
 #####################################################################################
-
+#YET TO BE FINISHED
 
 import pygame
 import os
@@ -164,7 +164,7 @@ class Ball(object):
             else:
                 self.x += 5
 
-    def checkFor1stPlayerGoal(self, player, widthScreen, heightScreen, goalWidth, goalHeight):
+    def checkFor1stPlayerGoal(self, player, widthScreen, heightScreen, goalWidth, goalHeight, guestPlayer):
         ###########################
         #Check for goal in the left
         ###########################
@@ -178,8 +178,10 @@ class Ball(object):
             self.y = heightScreen//2 - 20
             self.x = widthScreen//2
             player.goalCount += 1
+            player.x = widthScreen - playerWidth - goalWidth - 5
+            guestPlayer.x = goalWidth + 5
     
-    def checkForGuestPlayerGoal(self, guestPlayer, widthScreen, heightScreen, goalWidth, goalHeight):
+    def checkForGuestPlayerGoal(self, guestPlayer, widthScreen, heightScreen, goalWidth, goalHeight, player):
         ############################
         #Check for goal in the right
         ############################
@@ -191,6 +193,8 @@ class Ball(object):
             self.y = heightScreen//2 - 20
             self.x = widthScreen//2
             guestPlayer.goalCount += 1
+            guestPlayer.x = goalWidth + 5
+            player.x = widthScreen - playerWidth - goalWidth - 5
     
     
     def checkForBallCollisionsAndGravity(self, heightScreen, widthScreen, epsilon):
@@ -216,17 +220,17 @@ class SoccerPlayer(object):
     def jump(self, soccer):
         #if the jumpHeight varible is greater than 0 this means the y coordinate of our player should be less positive so that it moves upwards
         #this is attempted to represent the physics equation : y = 1/2at^2
+        self.jumping = True
         if self.jumpHeight > 0:
             self.y -= 1/2 * self.jumpHeight**2
-            self.rectangleY = self.y
             self.jumpHeight -= 1
             self.checkPlayerHittingBall(soccer, heightScreen, widthScreen)
             self.checkBallHitsMiddleHead(soccer, epsilon)
+
         #if our jumpHeight is negative our y coordinate of our player should be more positive so that it goes back to the floor
 
         elif self.jumpHeight >= -jumpHeight and self.jumpHeight <= 0:
             self.y += 1/2 * (self.jumpHeight ** 2)
-            self.rectangleY = self.y
             self.jumpHeight -= 1
             self.checkPlayerHittingBall(soccer, heightScreen, widthScreen)
             self.checkBallHitsMiddleHead(soccer, epsilon)
@@ -239,6 +243,7 @@ class SoccerPlayer(object):
             self.checkBallHitsMiddleHead(soccer, epsilon)
 
     def checkPlayerHittingBall(self, soccer, heightScreen, widthScreen):
+        collided = False
         #in pygame the x point is represented as the leftmost point
 
         #check if the ball hits the left side of the player
@@ -251,7 +256,7 @@ class SoccerPlayer(object):
         (soccer.x + soccer.width < self.x + self.width) and 
         (abs(soccer.x - self.x)) > abs(soccer.x + soccer.width - self.x - self.width)):
             soccer.BDY *= -1
-            # soccer.BDY *= -1
+            collided = True
 
         #checks if it is inside the player's body and if it is to the left of it
         elif (not self.checkBallHitsMiddleHead(soccer, epsilon) and 
@@ -263,6 +268,7 @@ class SoccerPlayer(object):
             soccer.x = self.x - 5
             soccer.BDY = 10*math.sin(70)
             soccer.BDX = -10*math.cos(70)
+            collided = True
 
         #Im going to make it so if the player is jumping and the ball is hit by the player the ball goes upwards
 
@@ -271,13 +277,14 @@ class SoccerPlayer(object):
         (soccer.y >= self.y) and (soccer.x > self.x) and (soccer.x <= self.x + 5)):
             soccer.BDY = 10*math.sin(-70)
             soccer.BDX = -10*math.cos(70)
+            collided = True
         #if it collides in the right 
         elif ((self.jumping) and (soccer.y + soccer.height <= self.y + self.width - 5) and
         (soccer.y >= self.y) and (soccer.x + soccer.width <= self.x + self.width) and 
         (soccer.x + soccer.width >= self.x + self.width +5)): 
             soccer.BDY  = 10*math.sin(-70)
             soccer.BDX = 10*math.cos(70)
-
+            collided = True
         #This checks if the ball was hit with the upper half of the body
         if ((soccer.y >= self.y) and 
         (soccer.y <= self.y + self.height/2) and 
@@ -299,6 +306,8 @@ class SoccerPlayer(object):
                 soccer.BDY = 5
                 soccer.x -= 5
 
+            collided = True
+
         #this applies to the lower half of the left side of the player
         elif ((soccer.y >= self.y) and 
         (soccer.y <= self.y + self.height - 30)  and
@@ -308,15 +317,14 @@ class SoccerPlayer(object):
             if soccer.BDX == 0 and abs(soccer.BDY) < 2:
                 soccer.BDX = -3
                 soccer.applyXMovement()
-
             #this second if statement applies if the ball is bouncing
             elif soccer.BDX == 0 and soccer.gravity != 0:
                 soccer.BDX = -0.25
-
             else:
                 soccer.BDX *= -1
-            
             soccer.x = player.x - 20
+
+            collided = True
 
         #check if the ball hits the right side of the player
         #first check for the upper half (head)
@@ -329,16 +337,18 @@ class SoccerPlayer(object):
             if self.jumping:
                 soccer.BDY = -12*math.sin(70)
                 soccer.BDX = 12*math.cos(70)
-    
+
             elif soccer.BDY < 0:            #this means the soccer is moving upwards
                 soccer.BDY = -10*math.sin(70)
                 soccer.BDX = 8*math.cos(70)
                 soccer.x += 10
-            
+
             elif soccer.BDY > 0 and soccer.y <= self.y + self.width/2:            #this checks if the ball is moving downwards
                 soccer.BDX *= -1
                 soccer.BDX += 2
                 soccer.x += 10
+
+            collided = True
 
         elif ((soccer.y >= self.y) and 
         (soccer.y <= self.y + self.height) and
@@ -351,12 +361,15 @@ class SoccerPlayer(object):
 
             #this applies for when the ball is bouncing
             elif soccer.BDX == 0 and soccer.gravity != 0:
-                soccer.BDX = 0.25 
+                soccer.BDX = 0.25
+
             else:
                 soccer.BDX *= -1
 
             soccer.x = self.x + self.width - 10
+            collided = True
 
+        return collided
     def checkBallHitsMiddleHead(self, soccer, epsilon):
         #if the ball hits the player directly in the middle (so like directly in head)
         if (
@@ -370,8 +383,8 @@ class SoccerPlayer(object):
     #CURRENTLY NOT WORKING##################################################
     ########################################################################
     def checkBallNotMoving(self, otherPlayer, soccer, epsilon, heightScreen):
-        if ((abs(soccer.BDY) < 2) and (abs(self.x + self.width - soccer.x) <= 1) and (abs(soccer.x + soccer.width - otherPlayer.x) <= 1) and 
-        (self.y + self.height == heightScreen) and (otherPlayer.y + otherPlayer.height == heightScreen)):
+        if ((abs(soccer.BDY) < 2) and (abs(self.x - soccer.x + soccer.width) <= 5) and (abs(soccer.x  - otherPlayer.x + otherPlayer.width) <= 5) and 
+        (abs(self.y + self.height - heightScreen) <= epsilon) and (abs(otherPlayer.y + otherPlayer.height - heightScreen) <= epsilon)):
             soccer.BDY = -3
             soccer.y = heightScreen//2
 
@@ -383,7 +396,7 @@ class DoraemonPlayer(SoccerPlayer):
 
     def checkPlayerHittingBall(self, soccer, heightScreen, widthScreen):
         #in pygame the x point is represented as the leftmost point
-
+        collided = False
         #check if the ball hits the left side of the player
         self.checkBallHitsMiddleHead(soccer, epsilon)
         #first let us check if the ball is inside the body of our player and to the right
@@ -394,7 +407,7 @@ class DoraemonPlayer(SoccerPlayer):
         (soccer.x + soccer.width < self.x + self.width) and 
         (abs(soccer.x - self.x)) > abs(soccer.x + soccer.width - self.x - self.width)):
             soccer.BDY *= -1
-            # soccer.BDY *= -1
+            collided = True
 
         #checks if it is inside the player's body and if it is to the left of it
         elif (not self.checkBallHitsMiddleHead(soccer, epsilon) and 
@@ -406,7 +419,7 @@ class DoraemonPlayer(SoccerPlayer):
             soccer.x = self.x - 10
             soccer.BDY = 9.5*math.sin(70)
             soccer.BDX = -7*math.cos(70)
-
+            collided = True
         #Im going to make it so if the player is jumping and the ball is hit by the player the ball goes upwards
 
         #checking if it collides in the left
@@ -414,14 +427,14 @@ class DoraemonPlayer(SoccerPlayer):
         (soccer.y >= self.y) and (soccer.x > self.x) and (soccer.x <= self.x + 5)):
             soccer.BDY = 11*math.sin(-70)
             soccer.BDX = -9*math.cos(70)
-
+            collided = True
         #if it collides in the right 
         elif ((self.jumping) and (soccer.y + soccer.height <= self.y + self.width - 5) and
         (soccer.y >= self.y) and (soccer.x + soccer.width <= self.x + self.width - 3) and
         (soccer.x + soccer.width >= self.x + self.width + 5)): 
             soccer.BDY  = 10*math.sin(-70)
             soccer.BDX = 8*math.cos(70)
-
+            collided = True
         #This checks if the ball was hit with the upper half of the body and
         if ((soccer.y >= self.y - 3) and 
         (soccer.y <= self.y + self.height/2) and 
@@ -436,12 +449,13 @@ class DoraemonPlayer(SoccerPlayer):
                 soccer.BDY = 11*math.sin(-70)
                 soccer.BDX = -9*math.cos(70)
                 soccer.x -= 10
+               
 
             elif soccer.BDY > 0:  #if the ball is moving downwards
                 if soccer.BDX == 0:
                     soccer.BDX = -2
                     soccer.applyXMovement()
-        
+
                 elif soccer.BDX > 0:
                     soccer.BDX *= -1
                     soccer.applyXMovement()
@@ -449,9 +463,12 @@ class DoraemonPlayer(SoccerPlayer):
                 elif soccer.BDX < 0 :
                     soccer.BDX -= 0.5
                     soccer.applyXMovement()
-
+                
                 soccer.x = self.x - 30
                 soccer.applyGravity()
+
+            collided = True
+    
 
         #this applies to the lower half of the left side of the player
         elif ((soccer.y >= self.y) and 
@@ -462,16 +479,18 @@ class DoraemonPlayer(SoccerPlayer):
             if soccer.BDX == 0 and abs(soccer.BDY) < 2:
                 soccer.BDX = -3
                 soccer.applyXMovement()
+    
 
             #this second if statement applies if the ball is bouncing
             elif soccer.BDX == 0 and soccer.gravity != 0:
                 soccer.BDX = -0.25
                 soccer.x = self.x - 20
-
+                
             else:
                 soccer.BDX *= -1
             
             soccer.x = self.x - 10
+            collided = True
 
         #check if the ball hits the right side of the player
         #first check for the upper half (head)
@@ -494,6 +513,9 @@ class DoraemonPlayer(SoccerPlayer):
                 soccer.BDX *= -1
                 soccer.BDX += 2
                 soccer.x += 10
+
+            collided = True
+            
         #lower half of right side of the player
         elif ((soccer.y >= self.y) and 
         (soccer.y <= self.y + self.height) and
@@ -511,6 +533,10 @@ class DoraemonPlayer(SoccerPlayer):
                 soccer.BDX *= -1
 
             soccer.x = self.x + self.width - 10
+            collided = True
+
+        return collided
+
 
     def checkBallHitsMiddleHead(self, soccer, epsilon):
         #if the ball hits the player directly in the middle (so like directly in head)
@@ -561,9 +587,6 @@ pressedButton = False
 soccer = Ball(soccerX, soccerY, soccerWidth, soccerHeight, soccerBDX, soccerBDY, friction, soccerGravity, airResistance)
 player = SoccerPlayer(playerWidth, playerHeight, playerX, playerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount)
 guestPlayer = DoraemonPlayer(playerWidth, playerHeight, guestPlayerX, guestPlayerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount)
-#############################
-#write functions here
-#############################
 
 
 #############################################################################
@@ -591,8 +614,8 @@ def checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, 
 
     soccer.checkForCollisionPostofGoal(goalHeight, goalWidth, widthScreen, heightScreen)
 
-    soccer.checkFor1stPlayerGoal(player, widthScreen, heightScreen, goalWidth, goalHeight)
-    soccer.checkForGuestPlayerGoal(guestPlayer, widthScreen, heightScreen, goalWidth, goalHeight)
+    soccer.checkFor1stPlayerGoal(player, widthScreen, heightScreen, goalWidth, goalHeight, guestPlayer)
+    soccer.checkForGuestPlayerGoal(guestPlayer, widthScreen, heightScreen, goalWidth, goalHeight, player)
     
     player.checkBallNotMoving(guestPlayer, soccer, epsilon, heightScreen)
 
@@ -622,10 +645,10 @@ def createStartPlaying2PlayerButton():
 
 def createButtonAI():
     #properties of the button
-    xstartButton = 660
-    ystartButton = 498
-    widthstartButton = 180
-    heightstartButton = 55
+    xButton = 660
+    yButton = 498
+    widthButton = 180
+    heightButton = 55
     xCenterTextButton = 750
     yCenterTextButton = 528
     green = (0, 255, 0)
@@ -634,7 +657,7 @@ def createButtonAI():
     fontButton = pygame.font.Font('freesansbold.ttf', 25)
     pressed = False
     #create the button and return it
-    startPlayingAIButton = Button(xstartButton, ystartButton, widthstartButton, heightstartButton, fontButton, green, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
+    startPlayingAIButton = Button(xButton, yButton, widthButton, heightButton, fontButton, green, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
     return startPlayingAIButton
 
 ##############################################
@@ -650,6 +673,7 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
     textIntroRectangle.center = (widthScreen//2, heightScreen//2)
     #Initial Screen Loop
     while firstDisplay:
+
         startPlaying2PlayerButton.pressedButton()
         startPlayingAIButton.pressedButton()
 
@@ -662,8 +686,6 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
             createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg)
 
         for event in pygame.event.get():
-            startPlaying2PlayerButton.pressedButton()
-            startPlayingAIButton.pressedButton()
             if event.type == pygame.QUIT:
                 firstDisplay = False
                 pygame.quit() 
@@ -683,22 +705,47 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
         pygame.display.flip()
 
 ###################################################################
-#Create the screen that will be popped if we select "Single Player"
+############ CODE AI PROJECT STARTS HERE ##########################
 ###################################################################
+#basic intelligence will only move based on the soccer position
+def applyBasicIntelligence(cpu):
+    #first the AI should go towards the soccer
+    epsilon = 10**-2
+  
+    if soccer.BDX == 0:
+        if cpu.x + cpu.width < soccer.x:
+            cpu.x += 6
+    if cpu.x + cpu.width < soccer.x :
+        cpu.x += 6
+    #this makes the AI move backwards if the soccer balll is going bakcwards
+    if cpu.x > soccer.x + soccer.width:
+        cpu.x -= 6
+    #there is a case where the cpu scores a goal and then goes backwards and hits the ball and scores an own goal so to fix this....
+    if abs(soccer.x - widthScreen//2) <= epsilon:
+        cpu.x -= 5
+    #check if the cpu needs to jump to hit the ball
+    if ((soccer.y - soccer.height < cpu.y) and (soccer.x - (cpu.x + cpu.width) < 5) and (soccer.x > cpu.x + cpu.width) or (cpu.jumping)):
+        cpu.jump(soccer)
+
+    #check if the other player hits the ball and go backwards
+    if (player.checkPlayerHittingBall(soccer, heightScreen, widthScreen) and ((soccer.x + soccer.width) < player.x) and 
+    (cpu.x + cpu.width < soccer.x)):
+        cpu.x -= 10
+    
+#Create the screen that will be popped if we select "Single Player"
 def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg):
     singlePlayerScreen = True
 
     while singlePlayerScreen:
         clock.tick(1000)
-
-
         keyPressed = pygame.key.get_pressed()
         #this makes sure the player can move continously so that we do not have to press the key multiple times
-        if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen:   #the purpose of the and is to ensure the player does not go outside of the right bound
+        if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
             player.x += 6                  #0.15
             player.rectangleX = player.x
-        
-        if keyPressed[pygame.K_LEFT] and player.x >= 0:         #the purpose of the and is to ensure the player does not go outside of the left bound
+    
+    
+        if keyPressed[pygame.K_LEFT] and player.x >= goalWidth - player.width + 20:         #the purpose of the and is to ensure the player does not go outside of the left bound
             player.x -= 6                       #0.15
             player.rectangleX = player.x
         
@@ -707,9 +754,8 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         
         if player.jumping:
             player.jump(soccer)
-
-        #make sure we check for all our collisions and goals, etc
-        checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
+            #make sure we check for all our collisions and goals, etc
+            checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
 
         #make sure the user can exit out of the game by pressing the top left exit button
         for event in pygame.event.get():
@@ -717,10 +763,12 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 singlePlayerScreen = False
                 pygame.quit()  	# ensures pygame module closes properly
                 os._exit(0)	    # ensure the window closes
+        
+        #for the AI to move let's call the function that will move our AI player
+        applyBasicIntelligence(guestPlayer)
 
+        #proceed to load the screen 
         screen.blit(pygame.image.load("Day Background.png"), (0,0))
-
-        #######################################
         black = (0,0,0)
         green = (0, 255, 0)
         #rectangle for debugging purposes
@@ -773,6 +821,9 @@ runPygame = True
 firstRun = True
 
 while runPygame:
+
+    createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg)
+    
     if firstRun:
         startPlaying2PlayerButton = createStartPlaying2PlayerButton()
         startPlayingAIButton = createButtonAI()
@@ -781,8 +832,6 @@ while runPygame:
     if not startPlaying2PlayerButton.pressed and not startPlayingAIButton.pressed:
         firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg)
 
-    elif startPlayingAIButton.pressed:
-        createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg)
 
     clock.tick(10000)
 
