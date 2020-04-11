@@ -4,7 +4,8 @@
 # Final Project: ShinDor Soccer
 # By: Alejandro Ruiz
 #####################################################################################
-#Note: Yet to be finished
+
+#pygame.sprite.collide_mask
 
 import pygame
 import os
@@ -40,6 +41,7 @@ goalRightImg = pygame.image.load("Goal Right.png")
 goalHeight = 250
 goalWidth = 127
 
+
 #Doraemon intro png gotten from: http://pluspng.com/png-83346.html
 doraemonIntroImg = pygame.image.load("Doraemon Intro.png")
 
@@ -54,13 +56,12 @@ soccerIntroImg = pygame.image.load("Soccer Intro.png")
 #############################
 
 class Button(object):
-    def __init__(self, x, y, width, height, fontButton, color1, color2, colorButton, text, xCenterText, yCenterText, pressed):
+    def __init__(self, x, y, width, height, fontButton, color1, colorButton, text, xCenterText, yCenterText, pressed):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.color1 = color1
-        self.color2 = color2
         self.text = text
         self.font = fontButton
         self.colorButton = colorButton
@@ -69,7 +70,7 @@ class Button(object):
         self.pressed = pressed
 
     def displayButton(self, screen):
-        textButton = self.font.render(self.text, True, self.color1, self.color2)
+        textButton = self.font.render(self.text, True, self.color1)
         buttonRectangle = textButton.get_rect()
         buttonRectangle.center = (self.xCenter, self.yCenter)
         pygame.draw.rect(screen, self.colorButton, (self.x, self.y, self.width, self.height))
@@ -77,14 +78,16 @@ class Button(object):
 
     def pressedButton(self):
         for event in pygame.event.get():
+
             mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+        
             if event.type == pygame.MOUSEBUTTONDOWN:
                 #now check that the mouseCoordX and mouseCoordY are in the range of the rectangle we drew
                 if ((mouseCoordX >= self.x and mouseCoordX <= self.x + self.width) and 
                 (mouseCoordY >= self.y and mouseCoordY <= self.y + self.height)):
                     self.pressed = True
-                    print(self.pressed)
-                
+                    return self.pressed
+        return self.pressed
                 #check if the mouse coordinates are inside the button range. If it is the button has been pressed
 
 class Ball(object):
@@ -170,27 +173,27 @@ class Ball(object):
         ###########################
 
         #I am just going to add the 5 to account for the post
-        if ((self.x < goalWidth - self.width - 3) and (self.y + self.height > heightScreen - goalHeight + 30)):
+        if ((self.x < goalWidth - self.width) and (self.y + self.height > heightScreen - goalHeight + 30)):
             self.x = 0
             player.scoredGoal = True
-            player.goalCount += 1
             self.BDX = 0
             self.BDY = 0
             self.y = heightScreen//2 - 20
             self.x = widthScreen//2
+            player.goalCount += 1
     
     def checkForGuestPlayerGoal(self, guestPlayer, widthScreen, heightScreen, goalWidth, goalHeight):
         ############################
         #Check for goal in the right
         ############################
-        if self.x > (widthScreen - goalWidth + self.width - 3) and self.y + self.height > (heightScreen - goalHeight + 30):
+        if self.x + self.width > (widthScreen - goalWidth + 1.5*self.width) and self.y + self.height > (heightScreen - goalHeight + 30):
             self.x = widthScreen - self.width
             guestPlayer.scoredGoal = True
-            guestPlayer.goalCount += 1
             self.BDX = 0
             self.BDY = 0
             self.y = heightScreen//2 - 20
             self.x = widthScreen//2
+            guestPlayer.goalCount += 1
     
     
     def checkForBallCollisionsAndGravity(self, heightScreen, widthScreen, epsilon):
@@ -365,6 +368,16 @@ class SoccerPlayer(object):
             soccer.BDY *= -1
             return True
         return False
+
+    ########################################################################
+    #CURRENTLY NOT WORKING##################################################
+    ########################################################################
+    def checkBallNotMoving(self, otherPlayer, soccer, epsilon, heightScreen):
+        if ((abs(soccer.BDY) < 2) and (abs(self.x + self.width - soccer.x) <= 1) and (abs(soccer.x + soccer.width - otherPlayer.x) <= 1) and 
+        (self.y + self.height == heightScreen) and (otherPlayer.y + otherPlayer.height == heightScreen)):
+            soccer.BDY = -3
+            soccer.y = heightScreen//2
+
 #We will make the collisions a little bit different for Doraemon since he has a wider head and different body than Shin Chan
 class DoraemonPlayer(SoccerPlayer):
     #we can call the init function from our soccerPlayer class since it will take the same values
@@ -407,19 +420,18 @@ class DoraemonPlayer(SoccerPlayer):
 
         #if it collides in the right 
         elif ((self.jumping) and (soccer.y + soccer.height <= self.y + self.width - 5) and
-        (soccer.y >= self.y) and (soccer.x + soccer.width <= self.x + self.width) and 
-        (soccer.x + soccer.width >= self.x + self.width +5)): 
+        (soccer.y >= self.y) and (soccer.x + soccer.width <= self.x + self.width - 3) and
+        (soccer.x + soccer.width >= self.x + self.width + 5)): 
             soccer.BDY  = 10*math.sin(-70)
             soccer.BDX = 8*math.cos(70)
 
-        #This checks if the ball was hit with the upper half of the body
+        #This checks if the ball was hit with the upper half of the body and
         if ((soccer.y >= self.y - 3) and 
         (soccer.y <= self.y + self.height/2) and 
         (soccer.x + soccer.width >= self.x ) and 
         (soccer.x + soccer.width <= self.x + self.width/2)):
             #if the player is jumping
             if self.jumping:
-            
                 soccer.BDY = 11*math.sin(-70)
                 soccer.BDX = -9*math.cos(70)
 
@@ -429,7 +441,6 @@ class DoraemonPlayer(SoccerPlayer):
                 soccer.x -= 10
 
             elif soccer.BDY > 0:  #if the ball is moving downwards
-                
                 if soccer.BDX == 0:
                     soccer.BDX = -2
                     soccer.applyXMovement()
@@ -471,7 +482,7 @@ class DoraemonPlayer(SoccerPlayer):
         if ((soccer.y >= self.y - 3) and 
         (soccer.y <= self.y + self.height/2) and 
         (soccer.x >= self.x + self.width/2) and 
-        (soccer.x <= self.x + self.width - 20)):
+        (soccer.x <= self.x + self.width)):
             #if the player is jumping then we apply the sin and cos as if a force was applied creating a physics-parabola effect
             if self.jumping:
                 soccer.BDY = -11*math.sin(70)
@@ -585,77 +596,132 @@ def checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, 
 
     soccer.checkFor1stPlayerGoal(player, widthScreen, heightScreen, goalWidth, goalHeight)
     soccer.checkForGuestPlayerGoal(guestPlayer, widthScreen, heightScreen, goalWidth, goalHeight)
+    
+
+    player.checkBallNotMoving(guestPlayer, soccer, epsilon, heightScreen)
 
 #############################################
 #first let us define the button to play the game
 #############################################
-def createStartPlayingButton():
+def createStartPlaying2PlayerButton():
     #properties of the button
-    xstartButton = 385
-    ystartButton = 400
-    widthstartButton = 325
-    heightstartButton = 100
-    xCenterTextButton = 550
-    yCenterTextButton = 450
+    xstartButton = 295
+    ystartButton = 498
+    widthstartButton = 160
+    heightstartButton = 55
+    xCenterTextButton = 375
+    yCenterTextButton = 525
     black = (0,0,0)
     white = (255, 255, 255)
-    buttonColor = (185, 115, 75)
-    textPlayingButton = "Click here to play!"
+    green = (0, 255, 0)
+    buttonColor = (0, 0, 128)
+    textPlayingButton = "2 Player"
     widthButton = 100
     heightButton = 100
-    fontButton = pygame.font.Font('freesansbold.ttf', 32)
+    fontButton = pygame.font.Font('freesansbold.ttf', 28)
     #create the button and return it
-    startPlayingButton = Button(xstartButton, ystartButton, widthstartButton, heightstartButton, fontButton, black, white, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressedButton)
-    return startPlayingButton
+    startPlaying2PlayerButton = Button(xstartButton, ystartButton, widthstartButton, heightstartButton, fontButton, green, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressedButton)
+    return startPlaying2PlayerButton
+
+#################################################
+#create the button to start playing against the AI
+##################################################
+
+def createButtonAI():
+    #properties of the button
+    xstartButton = 660
+    ystartButton = 498
+    widthstartButton = 180
+    heightstartButton = 55
+    xCenterTextButton = 750
+    yCenterTextButton = 528
+    green = (0, 255, 0)
+    buttonColor = (0, 0, 128)
+    textPlayingButton = "Single Player"
+    widthButton = 100
+    heightButton = 100
+    fontButton = pygame.font.Font('freesansbold.ttf', 25)
+    #create the button and return it
+    startPlayingAIButton = Button(xstartButton, ystartButton, widthstartButton, heightstartButton, fontButton, green, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressedButton)
+    return startPlayingAIButton
 
 ##############################################
 #This function displays the first screen######
 ##############################################
-def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlayingButton):
+def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton):
 
     introScreen = pygame.display.set_mode((widthScreen, heightScreen))
     firstDisplay = True
+    introBackgroundImg = pygame.image.load("Intro Background.jpg")
     textIntro = font.render('Welcome to Shin-Dor Soccer', True, green, blue)
     textIntroRectangle = textIntro.get_rect()
     textIntroRectangle.center = (widthScreen//2, heightScreen//2)
     #Initial Screen Loop
     while firstDisplay:
+        startPlaying2PlayerButton.pressedButton()
+        startPlayingAIButton.pressedButton()
 
-        if startPlayingButton.pressed == True:
+        if startPlaying2PlayerButton.pressed:
             firstDisplay = False
             #if the button is pressed we are done with the first display
-            print("Hi \n")
+        
+        elif startPlayingAIButton.pressed:
+            firstDisplay = False
 
         for event in pygame.event.get():
-            startPlayingButton.pressedButton()
-
+            startPlaying2PlayerButton.pressedButton()
+            startPlayingAIButton.pressedButton()
             if event.type == pygame.QUIT:
                 firstDisplay = False
-                pygame.quit()
+                pygame.quit() 
                 os._exit(0)
-            
-
         ################################
         #display of intro screen########
         ################################
 
         introScreen = pygame.display.set_mode((widthScreen, heightScreen))
-        introScreen.fill((255,0,0))
+        introScreen.blit((introBackgroundImg), (0,0))
         introScreen.blit(shinChanIntroImg, (17, 125))
         introScreen.blit(doraemonIntroImg, (725, 100))
         introScreen.blit(soccerIntroImg, (450, 20))
         introScreen.blit(textIntro, textIntroRectangle)
-        startPlayingButton.displayButton(introScreen)
+        startPlaying2PlayerButton.displayButton(introScreen)
+        startPlayingAIButton.displayButton(introScreen)
         pygame.display.flip()
+
+###################################################################
+#Create the screen that will be popped if we select "Single Player"
+###################################################################
+def createScreenSinglePlayer():
+
+def createGoalCount(player, guestPlayer, screen, widthScreen):
+    goalDisplay = pygame.image.load("Show Score.png")
+    numberLeft = guestPlayer.goalCount
+    numberRight = player.goalCount
+    scoreTextLeft = font.render(f'{numberLeft}', True, (255, 255, 255))        
+    scoreTextRight = font.render(f'{numberRight}', True, (255, 255, 255))  
+    scoreTextLeftRectangle = scoreTextLeft.get_rect() 
+    scoreTextRightRectangle = scoreTextRight.get_rect()
+    scoreTextRightRectangle.center = (widthScreen//2 + 78, 220)
+    scoreTextLeftRectangle.center = (widthScreen//2  - 70 , 220)
+    screen.blit(goalDisplay, (widthScreen//2 - 155, 25))
+    screen.blit(scoreTextRight, scoreTextRightRectangle)
+    screen.blit(scoreTextLeft, scoreTextLeftRectangle)
+
 
 #Game loop
 runPygame = True
-while runPygame:
-    startPlayingButton = createStartPlayingButton()
-    if not startPlayingButton.pressed:
-        firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlayingButton)
+firstRun = True
 
-    clock.tick(50)
+while runPygame:
+    if firstRun:
+        startPlaying2PlayerButton = createStartPlaying2PlayerButton()
+        startPlayingAIButton = createButtonAI()
+    # initial screen
+    if not startPlaying2PlayerButton.pressed:
+        firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton)
+ 
+    clock.tick(10000)
 
     keyPressed = pygame.key.get_pressed() #gets the key that it is being pressed
 
@@ -697,11 +763,10 @@ while runPygame:
         if event.type == pygame.QUIT:
             runPygame = False
             pygame.quit()  	# ensures pygame module closes properly
-            os._exit(0)		# ensure the window closes
+            os._exit(0)	    # ensure the window closes
             
     #sets the background color of the display
     screen.blit(pygame.image.load("Day Background.png"), (0,0))
-
     #######################################
     black = (0,0,0)
     green = (0, 255, 0)
@@ -709,6 +774,7 @@ while runPygame:
     #rectangle of player1 and ellipse
     pygame.draw.rect(screen, black,(player.x + 18, player.y + 25, player.width - 38, player.height  - 28),5)
     pygame.draw.ellipse(screen, green, (player.x + 7, player.y + 5, player.width - 16, player.height - 55), 4)
+
     #rectangle of guestPlayer and ellipse
     pygame.draw.rect(screen, black, (guestPlayer.x + 6, guestPlayer.y + 50, guestPlayer.width - 23, guestPlayer.height - 47), 5)
     pygame.draw.ellipse(screen, green, (guestPlayer.x - 5, guestPlayer.y - 5, guestPlayer.width + 2 , guestPlayer.height - 35), 4)
@@ -722,6 +788,7 @@ while runPygame:
     screen.blit(guestPlayerImg, (guestPlayer.x, guestPlayer.y))
     screen.blit(goalLeftImg, (0, heightScreen - goalHeight))
     screen.blit(goalRightImg, (widthScreen - goalWidth, heightScreen - goalHeight))
-    if player.scoredGoal == True:
-        screen.blit(textGoal, textGoalRectangle)
+    createGoalCount(player, guestPlayer, screen, widthScreen)
     pygame.display.flip()
+
+    firstRun = False
