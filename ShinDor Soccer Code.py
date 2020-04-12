@@ -292,7 +292,7 @@ class SoccerPlayer(object):
         (soccer.x + soccer.width < self.x + self.width/2)):
             #if the player is jumping
             if self.jumping:
-                soccer.BDY = 10*math.sin(-70)
+                soccer.BDY = 9*math.sin(-70)
                 soccer.BDX = -12*math.cos(70)
         
             elif soccer.BDY <0: #meaning the ball is moving upwards
@@ -718,22 +718,25 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
     if cpu.x + cpu.width >= widthScreen - goalWidth//2:
         cpu.x = widthScreen - cpu.width - goalWidth//2
 
+    if abs(cpu.x + cpu.width - soccer.x) <= 20 and abs(soccer.y + soccer.height - cpu.y) <= 25:
+        print("Moving \n")
+        cpu.jump(soccer)
+        cpu.x += 5
+
     #check if the other player hits the ball and go backwards if so
     if soccer.BDX >= 5*math.cos(50):
         cpu.x -= 5
     
     #this makes the AI move backwards if the soccer ball is going bakcwards
-    elif cpu.x > soccer.x + soccer.width:
+    elif abs(cpu.x + cpu.width - soccer.x) <= 65 and abs(cpu.x + cpu.width - soccer.x) >= 35 and  soccer.BDX < 0 and soccer.BDY > 0 :
         cpu.x -= 6
     
     #if the player hits the ball move backwards
     elif player.checkPlayerHittingBall(soccer, heightScreen, widthScreen):
-        print("Shin Chan hit the ball \n")
         cpu.x -= 6
     
     #check if the ball is closer to the other player and if it is retrocede in case it hits the ball
     elif abs(soccer.x + soccer.width - player.x) <= 5 and abs(soccer.x - cpu.x) > 5:
-        print("Ball closer to Shin Chan \n")
         cpu.x -= 6
 
     #if the soccer is not moving go towards it and hit it
@@ -745,16 +748,13 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
         cpu.x += 6
     
     #check if the cpu needs to jump to hit the ball
-    if ((soccer.y - soccer.height < cpu.y) and (soccer.x - (cpu.x + cpu.width) < 5) and (soccer.x > cpu.x + cpu.width) or (cpu.jumping)):
+    if ((soccer.y  + soccer.height < cpu.y) and (soccer.x - (cpu.x + cpu.width) < 5) and (soccer.x > cpu.x + cpu.width) or (cpu.jumping)):
         if cpu.x + cpu.width < soccer.x:
             cpu.x += 2
 
-        if cpu.jumpHeight + cpu.y <= soccer.y + soccer.height or cpu.jumping:
+        if cpu.jumpHeight + cpu.y <= soccer.y + soccer.height or cpu.jumping and soccer.y + soccer.width <= cpu.y:
             cpu.jump(soccer)
-            cpu.x += 5
-           
-
-
+            cpu.x += 2
     
 #Create the screen that will be popped if we select "Single Player"
 def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth):
