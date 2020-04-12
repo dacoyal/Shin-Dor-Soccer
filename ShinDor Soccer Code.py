@@ -1,10 +1,10 @@
-#####################################################################################
+  #####################################################################################
 # 15-112:Fundamentals of Programming and Computer Science
 # Carnegie Mellon University
 # Final Project: ShinDor Soccer
 # By: Alejandro Ruiz
 #####################################################################################
-#NOT YET FINISHED
+#YET TO BE FINISHED
 
 import pygame
 import os
@@ -155,8 +155,8 @@ class Ball(object):
             soccer.x = widthScreen - soccer.width
 
     def checkForCollisionPostofGoal(self, goalHeight, goalWidth, widthScreen, heightScreen):
-        if (self.y >= 0 and 
-        (self.y + self.height <= heightScreen - goalHeight + 20) and 
+        if (self.y >= 0 and
+        (self.y + self.height <= heightScreen - goalHeight + 30) and 
         ( (self.x <= goalWidth) or
         (self.x + self.width >= widthScreen - goalWidth))):
             self.BDX *= -1
@@ -506,11 +506,11 @@ class DoraemonPlayer(SoccerPlayer):
         (soccer.x <= self.x + self.width - 5)):
             #if the player is jumping then we apply the sin and cos as if a force was applied creating a physics-parabola effect
             if self.jumping:
-                soccer.BDY = -11*math.sin(70)
+                soccer.BDY = -10*math.sin(70)
                 soccer.BDX = 9*math.cos(70)
 
             elif soccer.BDY < 0:            #this means the soccer is moving upwards
-                soccer.BDY = -11*math.sin(70)
+                soccer.BDY = -10*math.sin(70)
                 soccer.BDX = 9*math.cos(70)
                 soccer.x += 10
                 
@@ -727,17 +727,40 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
     if cpu.x + cpu.width >= widthScreen - goalWidth//2:
         cpu.x = widthScreen - cpu.width - goalWidth//2
 
+    #if statemetns attempts the player to better hit the ball if it is coming at it when it is at the goal line clearance
+    if cpu.x == goalWidth//2 and soccer.BDX < 0 and abs(soccer.x - cpu.x - cpu.width) <= 50:
+        if abs(soccer.y + soccer.width - cpu.y) >= 5 and abs(soccer.y + soccer.width - cpu.y) <= 10:
+            cpu.jump(soccer)
+        else:
+            cpu.x += 6
+            cpu.jump(soccer)
+            print("Hi")
+
+    #to make the AI attack more
+    if soccer.BDX > 0 and cpu.x >= widthScreen//2 :
+        cpu.x += 5
+    #make the AI to be able to realize when to defend
+    elif soccer.BDX < 0 and cpu.x >= widthScreen//2:
+        cpu.x -= 6
+
+    if soccer.BDX < 0 and soccer.y + soccer.height < heightScreen - player.height and soccer.BDY < 0 and cpu.x >= goalWidth + 5 :
+        cpu.x -= 6
+        if abs(cpu.x - soccer.x) <= 20 and soccer.y + soccer.height > cpu.y:
+            cpu.x += 6
     #to defend better the goal line
     if soccer.x <= widthScreen//2 - goalWidth and soccer.BDX < 0 and cpu.x >= goalWidth - cpu.width:
-        cpu.x -= 5
+        cpu.x -= 6
         if cpu.x < goalWidth - cpu.width:
             cpu.x = goalWidth - cpu.width
         if abs(soccer.y - cpu.y) <= 6 and abs(soccer.x - cpu.x + cpu.width) <= soccer.width and soccer.BDY > 0:
-            print("Im jumping \n")
             cpu.jump(soccer)
+    
+    #make the CPU attack more
+    if soccer.x >= widthScreen//2 and soccer.BDX > 0:
+        cpu.x += 2
 
-    #if the  ball is close to the CPU make it move forward
-    if abs(soccer.x - cpu.x + cpu.width) <= 10:
+    #if the  ball is close to the CPU make it move forward to hit the ball
+    if abs(soccer.x - (cpu.x + cpu.width)) <= 10 and soccer.BDX > 0:
         cpu.x += 5
     
     #if the ball is right above the CPU make it jump
@@ -756,7 +779,7 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
     
     #this makes the AI move backwards if the soccer ball is going bakcwards
     elif abs(cpu.x + cpu.width - soccer.x) <= 65 and abs(cpu.x + cpu.width - soccer.x) >= 35 and  soccer.BDX < 0 and soccer.BDY > 0 :
-        cpu.x -= 6
+        cpu.x -= 6      
     
     #if the player hits the ball move backwards
     elif player.checkPlayerHittingBall(soccer, heightScreen, widthScreen):
@@ -814,7 +837,6 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         if player.jumping:
             player.jump(soccer)
             #make sure we check for all our collisions and goals, etc
-        
 
         #make sure the user can exit out of the game by pressing the top left exit button
         for event in pygame.event.get():
@@ -847,6 +869,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         screen.blit(goalLeftImg, (0, heightScreen - goalHeight))
         screen.blit(goalRightImg, (widthScreen - goalWidth, heightScreen - goalHeight))
         createGoalCount(player, guestPlayer, screen, widthScreen)
+    
         pygame.display.flip()
 
 
@@ -867,6 +890,23 @@ def createGoalCount(player, guestPlayer, screen, widthScreen):
     screen.blit(scoreTextRight, scoreTextRightRectangle)
     screen.blit(scoreTextLeft, scoreTextLeftRectangle)
 
+####################################################
+############ Creates Won Screen ###################
+####################################################
+def createGoalScreen(heightScreen, widthScreen):
+    displayWonScreen = True
+    wonScreenBackground = pygame.image.load("Goal Background.jpg")
+    wonScreenBackgroundTopLeft = (0,0)
+    red = (255, 0, 0)
+    text = "You won!"
+    textRect = text.get_rect()
+    textRect.center = (widthScreen//2, heightScreen//2)
+    wonScreen = pygame.display.set_mode((widthScreen, heightScreen))
+    
+    #goal screen loop
+    while displayWonScreen:
+        
+        wonScreen.blit(wonScreenBackground, wonScreenBackgroundTopLeft)
 
 ###################################################
 ###################################################
@@ -914,10 +954,10 @@ while runPygame:
     #To move the guest player... 
 
     if keyPressed[pygame.K_s] and guestPlayer.x + guestPlayer.width <= widthScreen - goalWidth + guestPlayer.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
-        guestPlayer.x += 8
+        guestPlayer.x += 6
     
     if keyPressed[pygame.K_a] and guestPlayer.x >= goalWidth - guestPlayer.width + 20:          #the purpose of this and is to ensure the player does not go outside of the left bound                                 
-        guestPlayer.x -= 8
+        guestPlayer.x -= 6
     
     if not guestPlayer.jumping and keyPressed[pygame.K_SPACE]: 
         guestPlayer.jumping = True
