@@ -12,8 +12,6 @@ import math
 import time
 from pygame import mixer
 
-#To load music do the following:
-
 pygame.init()
 
 #creates the screen, where 800 is width and 600 is the height
