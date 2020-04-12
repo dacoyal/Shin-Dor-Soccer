@@ -4,7 +4,7 @@
 # Final Project: ShinDor Soccer
 # By: Alejandro Ruiz
 #####################################################################################
-
+#YET TO BE FINISHED
 
 import pygame
 import os
