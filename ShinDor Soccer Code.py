@@ -4,7 +4,7 @@
 # Final Project: ShinDor Soccer
 # By: Alejandro Ruiz
 #####################################################################################
-#YET TO BE FINISHED
+
 
 import pygame
 import os
@@ -383,7 +383,7 @@ class SoccerPlayer(object):
     #CURRENTLY NOT WORKING##################################################
     ########################################################################
     def checkBallNotMoving(self, otherPlayer, soccer, epsilon, heightScreen):
-        if ((abs(soccer.BDY) < 2) and (abs(self.x - soccer.x + soccer.width) <= 5) and (abs(soccer.x  - otherPlayer.x + otherPlayer.width) <= 5) and 
+        if ((abs(soccer.BDY) < 2) and (abs(self.x - (soccer.x + soccer.width)) <= 5) and (abs(soccer.x  - (otherPlayer.x + otherPlayer.width)) <= 5) and 
         (abs(self.y + self.height - heightScreen) <= epsilon) and (abs(otherPlayer.y + otherPlayer.height - heightScreen) <= epsilon)):
             soccer.BDY = -3
             soccer.y = heightScreen//2
@@ -683,7 +683,7 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
         
         elif startPlayingAIButton.pressed:
             firstDisplay = False
-            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg)
+            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -708,40 +708,70 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
 ############ CODE AI PROJECT STARTS HERE ##########################
 ###################################################################
 #basic intelligence will only move based on the soccer position
-def applyBasicIntelligence(cpu):
+def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
     #first the AI should go towards the soccer
     epsilon = 10**-2
-  
-    if soccer.BDX == 0:
+    #make sure the AI does not go out of bounds
+    if cpu.x <= goalWidth//2:
+        cpu.x = goalWidth//2
+    #make sure the AI does not go outside of the right allowed bound
+    if cpu.x + cpu.width >= widthScreen - goalWidth//2:
+        cpu.x = widthScreen - cpu.width - goalWidth//2
+
+    #check if the other player hits the ball and go backwards if so
+    if soccer.BDX >= 5*math.cos(50):
+        cpu.x -= 5
+    
+    #this makes the AI move backwards if the soccer ball is going bakcwards
+    elif cpu.x > soccer.x + soccer.width:
+        cpu.x -= 6
+    
+    #if the player hits the ball move backwards
+    elif player.checkPlayerHittingBall(soccer, heightScreen, widthScreen):
+        print("Shin Chan hit the ball \n")
+        cpu.x -= 6
+    
+    #check if the ball is closer to the other player and if it is retrocede in case it hits the ball
+    elif abs(soccer.x + soccer.width - player.x) <= 5 and abs(soccer.x - cpu.x) > 5:
+        print("Ball closer to Shin Chan \n")
+        cpu.x -= 6
+
+    #if the soccer is not moving go towards it and hit it
+    elif soccer.BDX == 0:
         if cpu.x + cpu.width < soccer.x:
             cpu.x += 6
-    if cpu.x + cpu.width < soccer.x :
+    
+    elif cpu.x + cpu.width < soccer.x:
         cpu.x += 6
-    #this makes the AI move backwards if the soccer balll is going bakcwards
-    if cpu.x > soccer.x + soccer.width:
-        cpu.x -= 6
-    #there is a case where the cpu scores a goal and then goes backwards and hits the ball and scores an own goal so to fix this....
-    if abs(soccer.x - widthScreen//2) <= epsilon:
-        cpu.x -= 5
+    
     #check if the cpu needs to jump to hit the ball
     if ((soccer.y - soccer.height < cpu.y) and (soccer.x - (cpu.x + cpu.width) < 5) and (soccer.x > cpu.x + cpu.width) or (cpu.jumping)):
-        cpu.jump(soccer)
+        if cpu.x + cpu.width < soccer.x:
+            cpu.x += 2
 
-    #check if the other player hits the ball and go backwards
-    if (player.checkPlayerHittingBall(soccer, heightScreen, widthScreen) and ((soccer.x + soccer.width) < player.x) and 
-    (cpu.x + cpu.width < soccer.x)):
-        cpu.x -= 10
+        if cpu.jumpHeight + cpu.y <= soccer.y + soccer.height or cpu.jumping:
+            cpu.jump(soccer)
+            cpu.x += 5
+           
+
+
     
 #Create the screen that will be popped if we select "Single Player"
-def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg):
+def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth):
     singlePlayerScreen = True
 
     while singlePlayerScreen:
+
+        applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
+
+        checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
+
         clock.tick(1000)
+
         keyPressed = pygame.key.get_pressed()
         #this makes sure the player can move continously so that we do not have to press the key multiple times
         if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
-            player.x += 6                  #0.15
+            player.x += 6      
             player.rectangleX = player.x
     
     
@@ -751,11 +781,12 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         
         if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
             player.jumping = True
+            applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
         
         if player.jumping:
             player.jump(soccer)
             #make sure we check for all our collisions and goals, etc
-            checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
+        
 
         #make sure the user can exit out of the game by pressing the top left exit button
         for event in pygame.event.get():
@@ -764,8 +795,6 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 pygame.quit()  	# ensures pygame module closes properly
                 os._exit(0)	    # ensure the window closes
         
-        #for the AI to move let's call the function that will move our AI player
-        applyBasicIntelligence(guestPlayer)
 
         #proceed to load the screen 
         screen.blit(pygame.image.load("Day Background.png"), (0,0))
@@ -822,7 +851,7 @@ firstRun = True
 
 while runPygame:
 
-    createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg)
+    #createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth)
     
     if firstRun:
         startPlaying2PlayerButton = createStartPlaying2PlayerButton()
