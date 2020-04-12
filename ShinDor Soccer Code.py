@@ -727,15 +727,31 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
     if cpu.x + cpu.width >= widthScreen - goalWidth//2:
         cpu.x = widthScreen - cpu.width - goalWidth//2
 
+    #to defend better the goal line
+    if soccer.x <= widthScreen//2 - goalWidth and soccer.BDX < 0 and cpu.x >= goalWidth - cpu.width:
+        cpu.x -= 5
+        if cpu.x < goalWidth - cpu.width:
+            cpu.x = goalWidth - cpu.width
+        if abs(soccer.y - cpu.y) <= 6 and abs(soccer.x - cpu.x + cpu.width) <= soccer.width and soccer.BDY > 0:
+            print("Im jumping \n")
+            cpu.jump(soccer)
+
+    #if the  ball is close to the CPU make it move forward
+    if abs(soccer.x - cpu.x + cpu.width) <= 10:
+        cpu.x += 5
+    
+    #if the ball is right above the CPU make it jump
+    if (soccer.x - (cpu.x + cpu.width) < 0 and soccer.x - (cpu.x + cpu.width) > -81) and abs(cpu.y - (soccer.y + soccer.height)) < 10:
+        cpu.jump(soccer)
+    
     if (soccer.x <= goalWidth + cpu.width + 30 and soccer.BDY > 0):
         cpu.jump(soccer)
-    if abs(cpu.x + cpu.width - soccer.x) <= 20 and abs(soccer.y + soccer.height - cpu.y) <= 25:
-        print("Moving \n")
+    if abs(cpu.x + cpu.width - soccer.x) <= 20 and abs(soccer.y + soccer.height - cpu.y) <= 25 and soccer.BDY > 0:
         cpu.jump(soccer)
         cpu.x += 5
 
     #check if the other player hits the ball and go backwards if so
-    if soccer.BDX >= 5*math.cos(50):
+    if soccer.BDX >= 5*math.cos(50) and soccer.x >= widthScreen//2 + 100:
         cpu.x -= 5
     
     #this makes the AI move backwards if the soccer ball is going bakcwards
@@ -755,8 +771,9 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
         if cpu.x + cpu.width < soccer.x:
             cpu.x += 6
     
-    elif cpu.x + cpu.width < soccer.x:
-        cpu.x += 6
+    elif cpu.x + cpu.width < soccer.x - 20:
+        cpu.x += 3.5
+        #print(f'Moved forward \n')
     
     #check if the cpu needs to jump to hit the ball
     if ((soccer.y  + soccer.height < cpu.y) and (soccer.x - (cpu.x + cpu.width) < 5) and (soccer.x > cpu.x + cpu.width) or (cpu.jumping)):
