@@ -4,12 +4,15 @@
 # Final Project: ShinDor Soccer
 # By: Alejandro Ruiz
 #####################################################################################
-#YET TO BE FINISHED
+
 
 import pygame
 import os
 import math
 import time
+from pygame import mixer
+
+#To load music do the following:
 
 pygame.init()
 
@@ -180,6 +183,9 @@ class Ball(object):
             player.goalCount += 1
             player.x = widthScreen - playerWidth - goalWidth - 5
             guestPlayer.x = goalWidth + 5
+            goal_Sound = mixer.Sound("Goal Audio.mp3")
+            goal_Sound.play()
+
     
     def checkForGuestPlayerGoal(self, guestPlayer, widthScreen, heightScreen, goalWidth, goalHeight, player):
         ############################
@@ -195,6 +201,8 @@ class Ball(object):
             guestPlayer.goalCount += 1
             guestPlayer.x = goalWidth + 5
             player.x = widthScreen - playerWidth - goalWidth - 5
+            goal_Sound = mixer.Sound("Goal Audio.mp3")
+            goal_Sound.play()
     
     
     def checkForBallCollisionsAndGravity(self, heightScreen, widthScreen, epsilon):
@@ -450,7 +458,6 @@ class DoraemonPlayer(SoccerPlayer):
                 soccer.BDX = -9*math.cos(70)
                 soccer.x -= 10
                
-
             elif soccer.BDY > 0:  #if the ball is moving downwards
                 if soccer.BDX == 0:
                     soccer.BDX = -2
@@ -498,7 +505,7 @@ class DoraemonPlayer(SoccerPlayer):
         if ((soccer.y >= self.y - 3) and 
         (soccer.y <= self.y + self.height/2) and 
         (soccer.x >= self.x + self.width/2) and 
-        (soccer.x <= self.x + self.width)):
+        (soccer.x <= self.x + self.width - 5)):
             #if the player is jumping then we apply the sin and cos as if a force was applied creating a physics-parabola effect
             if self.jumping:
                 soccer.BDY = -11*math.sin(70)
@@ -508,7 +515,7 @@ class DoraemonPlayer(SoccerPlayer):
                 soccer.BDY = -11*math.sin(70)
                 soccer.BDX = 9*math.cos(70)
                 soccer.x += 10
-            
+                
             elif soccer.BDY > 0 and soccer.y <= self.y + self.width/2:            #this checks if the ball is moving downwards
                 soccer.BDX *= -1
                 soccer.BDX += 2
@@ -525,6 +532,7 @@ class DoraemonPlayer(SoccerPlayer):
             if soccer.BDX == 0 and abs(soccer.BDY) < 2:
                 soccer.BDX = 3
                 soccer.applyXMovement()
+                
             #this applies for when the ball is bouncing
             elif soccer.BDX == 0 and soccer.gravity != 0:
                 soccer.BDX = 0.25
@@ -664,13 +672,14 @@ def createButtonAI():
 #This function displays the first screen######
 ##############################################
 def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg):
-
     introScreen = pygame.display.set_mode((widthScreen, heightScreen))
     firstDisplay = True
     introBackgroundImg = pygame.image.load("Intro Background.jpg")
     textIntro = font.render('Welcome to Shin-Dor Soccer', True, green, blue)
     textIntroRectangle = textIntro.get_rect()
     textIntroRectangle.center = (widthScreen//2, heightScreen//2)
+    mixer.music.load("Intro Audio.mp3")
+    mixer.music.play(-1)
     #Initial Screen Loop
     while firstDisplay:
 
@@ -678,10 +687,12 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
         startPlayingAIButton.pressedButton()
 
         if startPlaying2PlayerButton.pressed:
+            mixer.music.pause()
             firstDisplay = False
             #if the button is pressed we are done with the first display
         
         elif startPlayingAIButton.pressed:
+            mixer.music.pause()
             firstDisplay = False
             createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth)
 
@@ -718,6 +729,8 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
     if cpu.x + cpu.width >= widthScreen - goalWidth//2:
         cpu.x = widthScreen - cpu.width - goalWidth//2
 
+    if (soccer.x <= goalWidth + cpu.width + 30 and soccer.BDY > 0):
+        cpu.jump(soccer)
     if abs(cpu.x + cpu.width - soccer.x) <= 20 and abs(soccer.y + soccer.height - cpu.y) <= 25:
         print("Moving \n")
         cpu.jump(soccer)
