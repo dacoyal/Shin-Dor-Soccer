@@ -1,3 +1,4 @@
+
   #####################################################################################
 # 15-112:Fundamentals of Programming and Computer Science
 # Carnegie Mellon University
@@ -19,7 +20,7 @@ widthScreen = 1100    #800
 heightScreen = 600  #600
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode((widthScreen, heightScreen))
-screen.blit(pygame.image.load("Day Background.png"), (0,0))
+screen.blit(pygame.image.load("Head Soccer Background Dani Edited.png"), (0,0))
 
 #Tile and Icon of the window
 pygame.display.set_caption("ShinDor Soccer")
@@ -31,15 +32,19 @@ soccerImg = pygame.image.load("Soccer.png")
 soccerMask = pygame.mask.from_surface(soccerImg)
 #Doraemon gotten from: https://www.pngfind.com/mpng/hJohToh_free-download-doraemon-png-clipart-doraemon-doraemon-transparent/
 guestPlayerImg = pygame.image.load("Doraemon Left.png")
-guestPlayerMask = pygame.mask.from_surface(guestPlayerImg)
+guestPlayerAlpha = guestPlayerImg.convert_alpha()
+guestPlayerMask = pygame.mask.from_surface(guestPlayerAlpha)
 #Shin Chan gotten from: https://www.seekpng.com/ipng/u2q8u2a9r5t4q8q8_shin-chan-shin-chan/
 playerImg = pygame.image.load("Shin Chan Right.png")
-playerMask = pygame.mask.from_surface(playerImg)
+playerAlpha = playerImg.convert_alpha()
+playerMask = pygame.mask.from_surface(playerAlpha)
 #Goal Image gotten from: https://www.seekpng.com/idown/u2q8e6y3t4w7y3r5_soccer-goal-sprite-006-soccer-goal-sprite-sheet/
 goalLeftImg = pygame.image.load("Goal Left.png")
 goalRightImg = pygame.image.load("Goal Right.png")
+
 goalHeight = 250
 goalWidth = 127
+time = 0
 
 
 #Doraemon intro png gotten from: http://pluspng.com/png-83346.html
@@ -212,7 +217,7 @@ class Ball(object):
 
 class SoccerPlayer(object):
 
-    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount):
+    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, mask):
         self.width = width
         self.height = height
         self.x = x
@@ -222,6 +227,7 @@ class SoccerPlayer(object):
         self.jumpHeight = jumpHeight
         self.scoredGoal = scoredGoal
         self.goalCount = goalCount
+        self.mask = mask
     
     def jump(self, soccer):
         #if the jumpHeight varible is greater than 0 this means the y coordinate of our player should be less positive so that it moves upwards
@@ -397,8 +403,8 @@ class SoccerPlayer(object):
 #We will make the collisions a little bit different for Doraemon since he has a wider head and different body than Shin Chan
 class DoraemonPlayer(SoccerPlayer):
     #we can call the init function from our soccerPlayer class since it will take the same values
-    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount):
-        super().__init__(width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount)
+    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, mask):
+        super().__init__(width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, mask)
 
     def checkPlayerHittingBall(self, soccer, heightScreen, widthScreen):
         #in pygame the x point is represented as the leftmost point
@@ -591,8 +597,8 @@ pressedButton = False
 #let's create three objects, our player, the other player and the soccer ball
 #####################################################
 soccer = Ball(soccerX, soccerY, soccerWidth, soccerHeight, soccerBDX, soccerBDY, friction, soccerGravity, airResistance)
-player = SoccerPlayer(playerWidth, playerHeight, playerX, playerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount)
-guestPlayer = DoraemonPlayer(playerWidth, playerHeight, guestPlayerX, guestPlayerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount)
+player = SoccerPlayer(playerWidth, playerHeight, playerX, playerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, playerMask)
+guestPlayer = DoraemonPlayer(playerWidth, playerHeight, guestPlayerX, guestPlayerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, guestPlayerMask)
 
 
 #############################################################################
@@ -717,7 +723,7 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
 ############ CODE AI PROJECT STARTS HERE ##########################
 ###################################################################
 #basic intelligence will only move based on the soccer position
-def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
+def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth, time):
     #first the AI should go towards the soccer
     epsilon = 10**-2
     #make sure the AI does not go out of bounds
@@ -734,7 +740,6 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
         else:
             cpu.x += 6
             cpu.jump(soccer)
-            print("Hi")
 
     #to make the AI attack more
     if soccer.BDX > 0 and cpu.x >= widthScreen//2 :
@@ -766,13 +771,6 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
     #if the ball is right above the CPU make it jump
     if (soccer.x - (cpu.x + cpu.width) < 0 and soccer.x - (cpu.x + cpu.width) > -81) and abs(cpu.y - (soccer.y + soccer.height)) < 10:
         cpu.jump(soccer)
-    
-    if (soccer.x <= goalWidth + cpu.width + 30 and soccer.BDY > 0):
-        cpu.jump(soccer)
-    if abs(cpu.x + cpu.width - soccer.x) <= 20 and abs(soccer.y + soccer.height - cpu.y) <= 25 and soccer.BDY > 0:
-        cpu.jump(soccer)
-        cpu.x += 5
-
     #check if the other player hits the ball and go backwards if so
     if soccer.BDX >= 5*math.cos(50) and soccer.x >= widthScreen//2 + 100:
         cpu.x -= 5
@@ -809,30 +807,33 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
     
 #Create the screen that will be popped if we select "Single Player"
 def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth):
+    global time
     singlePlayerScreen = True
 
     while singlePlayerScreen:
 
-        applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
+        clock.tick(1000)
+        time += 1
+
+        applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth, time)
 
         checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
 
-        clock.tick(1000)
 
         keyPressed = pygame.key.get_pressed()
         #this makes sure the player can move continously so that we do not have to press the key multiple times
         if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
-            player.x += 6      
+            player.x += 10     
             player.rectangleX = player.x
     
     
         if keyPressed[pygame.K_LEFT] and player.x >= goalWidth - player.width + 20:         #the purpose of the and is to ensure the player does not go outside of the left bound
-            player.x -= 6                       #0.15
+            player.x -= 10                       #0.15
             player.rectangleX = player.x
         
         if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
             player.jumping = True
-            applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
+            applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth, time)
         
         if player.jumping:
             player.jump(soccer)
@@ -847,7 +848,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         
 
         #proceed to load the screen 
-        screen.blit(pygame.image.load("Day Background.png"), (0,0))
+        screen.blit(pygame.image.load("Head Soccer Background Dani Edited.png"), (0,0))
         black = (0,0,0)
         green = (0, 255, 0)
         #rectangle for debugging purposes
@@ -975,7 +976,7 @@ while runPygame:
             os._exit(0)	    # ensure the window closes
             
     #sets the background color of the display
-    screen.blit(pygame.image.load("Day Background.png"), (0,0))
+    screen.blit(pygame.image.load("Head Soccer Background Dani Edited.png"), (0,0))
     #######################################
     black = (0,0,0)
     green = (0, 255, 0)
