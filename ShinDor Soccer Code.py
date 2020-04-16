@@ -11,6 +11,7 @@ import pygame
 import os
 import math
 import time
+import numpy as np
 from pygame import mixer
 
 pygame.init()
@@ -29,15 +30,10 @@ pygame.display.set_caption("ShinDor Soccer")
 
 ##Soccer gotten from: http://www.pngmart.com/image/592
 soccerImg = pygame.image.load("Soccer.png")
-soccerMask = pygame.mask.from_surface(soccerImg)
 #Doraemon gotten from: https://www.pngfind.com/mpng/hJohToh_free-download-doraemon-png-clipart-doraemon-doraemon-transparent/
 guestPlayerImg = pygame.image.load("Doraemon Left.png")
-guestPlayerAlpha = guestPlayerImg.convert_alpha()
-guestPlayerMask = pygame.mask.from_surface(guestPlayerAlpha)
 #Shin Chan gotten from: https://www.seekpng.com/ipng/u2q8u2a9r5t4q8q8_shin-chan-shin-chan/
 playerImg = pygame.image.load("Shin Chan Right.png")
-playerAlpha = playerImg.convert_alpha()
-playerMask = pygame.mask.from_surface(playerAlpha)
 #Goal Image gotten from: https://www.seekpng.com/idown/u2q8e6y3t4w7y3r5_soccer-goal-sprite-006-soccer-goal-sprite-sheet/
 goalLeftImg = pygame.image.load("Goal Left.png")
 goalRightImg = pygame.image.load("Goal Right.png")
@@ -59,8 +55,9 @@ soccerIntroImg = pygame.image.load("Soccer Intro.png")
 #############################
 #create classes for ball, players and buttons
 #############################
-
+    
 class Button(object):
+
     def __init__(self, x, y, width, height, fontButton, color1, colorButton, text, xCenterText, yCenterText, pressed):
         self.x = x
         self.y = y
@@ -81,17 +78,12 @@ class Button(object):
         pygame.draw.rect(screen, self.colorButton, (self.x, self.y, self.width, self.height))
         screen.blit(textButton, buttonRectangle)
 
-    def pressedButton(self):
-        for event in pygame.event.get():
-
-            if(event.type == pygame.MOUSEBUTTONDOWN):
-                mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
-
-                #now check that the mouseCoordX and mouseCoordY are in the range of the rectangle we drew
-                if ((mouseCoordX >= self.x and mouseCoordX <= self.x + self.width) and 
-                (mouseCoordY >= self.y and mouseCoordY <= self.y + self.height)):
-                    self.pressed = True
-                #check if the mouse coordinates are inside the button range. If it is the button has been pressed
+    def pressedButton(self, mouseCoordX, mouseCoordY):
+        #now check that the mouseCoordX and mouseCoordY are in the range of the rectangle we drew
+        if ((mouseCoordX >= self.x and mouseCoordX <= self.x + self.width) and 
+        (mouseCoordY >= self.y and mouseCoordY <= self.y + self.height)):
+            self.pressed = True
+        #check if the mouse coordinates are inside the button range. If it is the button has been pressed
 
 class Ball(object):
 
@@ -217,7 +209,7 @@ class Ball(object):
 
 class SoccerPlayer(object):
 
-    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, mask):
+    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen):
         self.width = width
         self.height = height
         self.x = x
@@ -227,8 +219,10 @@ class SoccerPlayer(object):
         self.jumpHeight = jumpHeight
         self.scoredGoal = scoredGoal
         self.goalCount = goalCount
-        self.mask = mask
-    
+        self.extraSpeed = extraSpeed
+        self.collidedTimes = collidedTimes
+        self.frozen = frozen
+
     def jump(self, soccer):
         #if the jumpHeight varible is greater than 0 this means the y coordinate of our player should be less positive so that it moves upwards
         #this is attempted to represent the physics equation : y = 1/2at^2
@@ -281,6 +275,7 @@ class SoccerPlayer(object):
             soccer.BDY = 10*math.sin(70)
             soccer.BDX = -10*math.cos(70)
             collided = True
+            self.collidedTimes += 1
 
         #Im going to make it so if the player is jumping and the ball is hit by the player the ball goes upwards
 
@@ -290,6 +285,7 @@ class SoccerPlayer(object):
             soccer.BDY = 10*math.sin(-70)
             soccer.BDX = -10*math.cos(70)
             collided = True
+            self.collidedTimes += 1
         #if it collides in the right 
         elif ((self.jumping) and (soccer.y + soccer.height <= self.y + self.width - 5) and
         (soccer.y >= self.y) and (soccer.x + soccer.width <= self.x + self.width) and 
@@ -297,6 +293,7 @@ class SoccerPlayer(object):
             soccer.BDY  = 10*math.sin(-70)
             soccer.BDX = 10*math.cos(70)
             collided = True
+            self.collidedTimes += 1
         #This checks if the ball was hit with the upper half of the body
         if ((soccer.y >= self.y) and 
         (soccer.y <= self.y + self.height/2) and 
@@ -319,6 +316,7 @@ class SoccerPlayer(object):
                 soccer.x -= 5
 
             collided = True
+            self.collidedTimes += 1
 
         #this applies to the lower half of the left side of the player
         elif ((soccer.y >= self.y) and 
@@ -337,6 +335,7 @@ class SoccerPlayer(object):
             soccer.x = player.x - 20
 
             collided = True
+            self.collidedTimes += 1
 
         #check if the ball hits the right side of the player
         #first check for the upper half (head)
@@ -361,6 +360,7 @@ class SoccerPlayer(object):
                 soccer.x += 10
 
             collided = True
+            self.collidedTimes += 1
 
         elif ((soccer.y >= self.y) and 
         (soccer.y <= self.y + self.height) and
@@ -380,6 +380,7 @@ class SoccerPlayer(object):
 
             soccer.x = self.x + self.width - 10
             collided = True
+            self.collidedTimes += 1
 
         return collided
     def checkBallHitsMiddleHead(self, soccer, epsilon):
@@ -388,12 +389,12 @@ class SoccerPlayer(object):
         ((abs(soccer.y + soccer.height - self.y + 6)) <= epsilon) and (soccer.x >= self.x) and
         (soccer.x + soccer.width <= self.x + self.width - 3)) and soccer.BDY > 0:
             soccer.BDY *= -1
+            self.collidedTimes += 1
             return True
+        
         return False
 
-    ########################################################################
-    #CURRENTLY NOT WORKING##################################################
-    ########################################################################
+    #check if the ball is not moving if so lift it up
     def checkBallNotMoving(self, otherPlayer, soccer, epsilon, heightScreen):
         if ((abs(soccer.BDY) < 2) and (abs(self.x - (soccer.x + soccer.width)) <= 5) and (abs(soccer.x  - (otherPlayer.x + otherPlayer.width)) <= 5) and 
         (abs(self.y + self.height - heightScreen) <= epsilon) and (abs(otherPlayer.y + otherPlayer.height - heightScreen) <= epsilon)):
@@ -403,8 +404,9 @@ class SoccerPlayer(object):
 #We will make the collisions a little bit different for Doraemon since he has a wider head and different body than Shin Chan
 class DoraemonPlayer(SoccerPlayer):
     #we can call the init function from our soccerPlayer class since it will take the same values
-    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, mask):
-        super().__init__(width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, mask)
+    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen):
+        super().__init__(width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen)
+
 
     def checkPlayerHittingBall(self, soccer, heightScreen, widthScreen):
         #in pygame the x point is represented as the leftmost point
@@ -420,6 +422,7 @@ class DoraemonPlayer(SoccerPlayer):
         (abs(soccer.x - self.x)) > abs(soccer.x + soccer.width - self.x - self.width)):
             soccer.BDY *= -1
             collided = True
+            self.collidedTimes += 1
 
         #checks if it is inside the player's body and if it is to the left of it
         elif (not self.checkBallHitsMiddleHead(soccer, epsilon) and 
@@ -432,6 +435,7 @@ class DoraemonPlayer(SoccerPlayer):
             soccer.BDY = 9.5*math.sin(70)
             soccer.BDX = -7*math.cos(70)
             collided = True
+            self.collidedTimes += 1
         #Im going to make it so if the player is jumping and the ball is hit by the player the ball goes upwards
 
         #checking if it collides in the left
@@ -440,6 +444,7 @@ class DoraemonPlayer(SoccerPlayer):
             soccer.BDY = 11*math.sin(-70)
             soccer.BDX = -9*math.cos(70)
             collided = True
+            self.collidedTimes += 1
         #if it collides in the right 
         elif ((self.jumping) and (soccer.y + soccer.height <= self.y + self.width - 5) and
         (soccer.y >= self.y) and (soccer.x + soccer.width <= self.x + self.width - 3) and
@@ -447,6 +452,7 @@ class DoraemonPlayer(SoccerPlayer):
             soccer.BDY  = 10*math.sin(-70)
             soccer.BDX = 8*math.cos(70)
             collided = True
+            self.collidedTimes += 1
         #This checks if the ball was hit with the upper half of the body and
         if ((soccer.y >= self.y - 3) and 
         (soccer.y <= self.y + self.height/2) and 
@@ -479,6 +485,7 @@ class DoraemonPlayer(SoccerPlayer):
                 soccer.applyGravity()
 
             collided = True
+            self.collidedTimes += 1
     
 
         #this applies to the lower half of the left side of the player
@@ -502,6 +509,7 @@ class DoraemonPlayer(SoccerPlayer):
             
             soccer.x = self.x - 10
             collided = True
+            self.collidedTimes += 1
 
         #check if the ball hits the right side of the player
         #first check for the upper half (head)
@@ -526,6 +534,7 @@ class DoraemonPlayer(SoccerPlayer):
                 soccer.x += 10
 
             collided = True
+            self.collidedTimes +=1 
             
         #lower half of right side of the player
         elif ((soccer.y >= self.y) and 
@@ -546,6 +555,7 @@ class DoraemonPlayer(SoccerPlayer):
 
             soccer.x = self.x + self.width - 10
             collided = True
+            self.collidedTimes += 1
 
         return collided
 
@@ -557,6 +567,7 @@ class DoraemonPlayer(SoccerPlayer):
         ((soccer.y + soccer.height >= self.y - 5) and (soccer.x >= self.x) and
         (soccer.x + soccer.width <= self.x + self.width - 3)) and soccer.BDY > 0):
             soccer.BDY *= -1
+            self.collidedTimes += 1
             return True
         return False
 
@@ -593,12 +604,16 @@ font = pygame.font.Font('freesansbold.ttf', 32)
 textGoal = font.render('GOOOOOOOOOOOOOAAAAAL', True, green, blue)
 textGoalRectangle = textGoal.get_rect()
 pressedButton = False
+extraSpeed = 0
+collidedTimes = 0
+frozen = False
+timeFrozen = None
 ###################################
 #let's create three objects, our player, the other player and the soccer ball
 #####################################################
 soccer = Ball(soccerX, soccerY, soccerWidth, soccerHeight, soccerBDX, soccerBDY, friction, soccerGravity, airResistance)
-player = SoccerPlayer(playerWidth, playerHeight, playerX, playerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, playerMask)
-guestPlayer = DoraemonPlayer(playerWidth, playerHeight, guestPlayerX, guestPlayerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, guestPlayerMask)
+player = SoccerPlayer(playerWidth, playerHeight, playerX, playerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen)
+guestPlayer = DoraemonPlayer(playerWidth, playerHeight, guestPlayerX, guestPlayerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen)
 
 
 #############################################################################
@@ -686,19 +701,25 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
     mixer.music.play(-1)
     #Initial Screen Loop
     while firstDisplay:
+        #check if the user presses the button
+        for event in pygame.event.get():
 
-        startPlaying2PlayerButton.pressedButton()
-        startPlayingAIButton.pressedButton()
+            if(event.type == pygame.MOUSEBUTTONDOWN):
+                mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+
+                startPlaying2PlayerButton.pressedButton(mouseCoordX, mouseCoordY)
+                startPlayingAIButton.pressedButton(mouseCoordX, mouseCoordY)
+
+        if startPlayingAIButton.pressed:
+            mixer.music.pause()
+            firstDisplay = False
+            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth)
 
         if startPlaying2PlayerButton.pressed:
             mixer.music.pause()
             firstDisplay = False
             #if the button is pressed we are done with the first display
-        
-        elif startPlayingAIButton.pressed:
-            mixer.music.pause()
-            firstDisplay = False
-            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth)
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -723,7 +744,7 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
 ############ CODE AI PROJECT STARTS HERE ##########################
 ###################################################################
 #basic intelligence will only move based on the soccer position
-def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth, time):
+def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
     #first the AI should go towards the soccer
     epsilon = 10**-2
     #make sure the AI does not go out of bounds
@@ -804,18 +825,125 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth, time):
         if cpu.jumpHeight + cpu.y <= soccer.y + soccer.height or cpu.jumping and soccer.y + soccer.width <= cpu.y:
             cpu.jump(soccer)
             cpu.x += 2
+
+#medium level AI
+def mediumAI(cpu, soccer, widthScreen, goalWidth):
+       #first the AI should go towards the soccer
+    epsilon = 10**-2
+    #make sure the AI does not go out of bounds
+    if cpu.x <= goalWidth//2:
+        cpu.x = goalWidth//2
+    #make sure the AI does not go outside of the right allowed bound
+    if cpu.x + cpu.width >= widthScreen - goalWidth//2:
+        cpu.x = widthScreen - cpu.width - goalWidth//2
+
+    #if statemetns attempts the player to better hit the ball if it is coming at it when it is at the goal line clearance
+    if cpu.x == goalWidth//2 and soccer.BDX < 0 and abs(soccer.x - cpu.x - cpu.width) <= 50:
+        if abs(soccer.y + soccer.width - cpu.y) >= 5 and abs(soccer.y + soccer.width - cpu.y) <= 10:
+            print("Hello")
+            cpu.jump(soccer)
+        else:
+            print("Hello too")
+            cpu.x += 6
+            cpu.jump(soccer)
+
+    #to make the AI attack more
+    if soccer.BDX > 0 and cpu.x >= widthScreen//2 :
+        cpu.x += 5
+    #make the AI to be able to realize when to defend
+    elif soccer.BDX < 0 and cpu.x >= widthScreen//2:
+        cpu.x -= 6
+
+    if soccer.BDX < 0 and soccer.y + soccer.height < heightScreen - player.height and soccer.BDY < 0 and cpu.x >= goalWidth + 5 :
+        cpu.x -= 6
+        if abs(cpu.x - soccer.x) <= 20 and soccer.y + soccer.height > cpu.y:
+            cpu.x += 6
+    #to defend better the goal line
+    if soccer.x <= widthScreen//2 - goalWidth and soccer.BDX < 0 and cpu.x >= goalWidth - cpu.width:
+        cpu.x -= 6
+        if cpu.x < goalWidth - cpu.width:
+            cpu.x = goalWidth - cpu.width
+        if abs(soccer.y - cpu.y) <= 6 and abs(soccer.x - cpu.x + cpu.width) <= soccer.width and soccer.BDY > 0:
+            cpu.jump(soccer)
     
+    #make the CPU attack more
+    if soccer.x >= widthScreen//2 and soccer.BDX > 0:
+        cpu.x += 2
+
+    #if the  ball is close to the CPU make it move forward to hit the ball
+    if abs(soccer.x - (cpu.x + cpu.width)) <= 10 and soccer.BDX > 0:
+        cpu.x += 5
+    
+    #if the ball is right above the CPU make it jump
+    if (soccer.x - (cpu.x + cpu.width) < 0 and soccer.x - (cpu.x + cpu.width) > -81) and abs(cpu.y - (soccer.y + soccer.height)) < 10:
+        print("Hi \n")
+        cpu.jump(soccer)
+        timeJumped = time
+    
+    elif (soccer.x <= goalWidth + cpu.width + 30 and soccer.BDY > 0) and time:
+        print("Hey \n")
+        cpu.jump(soccer)
+
+    elif abs(cpu.x + cpu.width - soccer.x) <= 20 and abs(soccer.y + soccer.height - cpu.y) <= 25 and soccer.BDY > 0:
+        cpu.jump(soccer)
+        cpu.x += 5
+
+    #check if the other player hits the ball and go backwards if so
+    if soccer.BDX >= 5*math.cos(50) and soccer.x >= widthScreen//2 + 100:
+        cpu.x -= 5
+    
+    #this makes the AI move backwards if the soccer ball is going bakcwards
+    elif abs(cpu.x + cpu.width - soccer.x) <= 65 and abs(cpu.x + cpu.width - soccer.x) >= 35 and  soccer.BDX < 0 and soccer.BDY > 0 :
+        cpu.x -= 6      
+    
+    #if the player hits the ball move backwards
+    elif player.checkPlayerHittingBall(soccer, heightScreen, widthScreen):
+        cpu.x -= 6
+    
+    #check if the ball is closer to the other player and if it is retrocede in case it hits the ball
+    elif abs(soccer.x + soccer.width - player.x) <= 5 and abs(soccer.x - cpu.x) > 5:
+        cpu.x -= 6
+
+    #if the soccer is not moving go towards it and hit it
+    elif soccer.BDX == 0:
+        if cpu.x + cpu.width < soccer.x:
+            cpu.x += 6
+    
+    elif cpu.x + cpu.width < soccer.x - 20:
+        cpu.x += 3.5
+        #print(f'Moved forward \n')
+    
+    #check if the cpu needs to jump to hit the ball
+    if ((soccer.y  + soccer.height < cpu.y) and (soccer.x - (cpu.x + cpu.width) < 5) and (soccer.x > cpu.x + cpu.width) or (cpu.jumping)):
+        if cpu.x + cpu.width < soccer.x:
+            cpu.x += 2
+
+        if cpu.jumpHeight + cpu.y <= soccer.y + soccer.height or cpu.jumping and soccer.y + soccer.width <= cpu.y:
+            cpu.jump(soccer)
+            cpu.x += 2
+
+#this function uses Pythagoran Theorem to calculate the hypotenuse of a triangle
+def hypotenuse(x, y):
+    return math.sqrt(x**2 + y**2)
+
+#convert from degree to radian
+def radian(angle):
+    return angle * (math.pi/180)
+
+#implement an AI now using an algorithm
+def algorithmAI(cpu, soccer, widthScreen, goalWidth):
+    return 42
+    
+
 #Create the screen that will be popped if we select "Single Player"
 def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth):
-    global time
     singlePlayerScreen = True
 
     while singlePlayerScreen:
 
         clock.tick(1000)
-        time += 1
 
-        applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth, time)
+        applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
 
         checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
 
@@ -833,7 +961,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         
         if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
             player.jumping = True
-            applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth, time)
+            applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
         
         if player.jumping:
             player.jump(soccer)
@@ -894,7 +1022,7 @@ def createGoalCount(player, guestPlayer, screen, widthScreen):
 ####################################################
 ############ Creates Won Screen ###################
 ####################################################
-def createGoalScreen(heightScreen, widthScreen):
+def createWonScreen(heightScreen, widthScreen):
     displayWonScreen = True
     wonScreenBackground = pygame.image.load("Goal Background.jpg")
     wonScreenBackgroundTopLeft = (0,0)
@@ -909,6 +1037,52 @@ def createGoalScreen(heightScreen, widthScreen):
         
         wonScreen.blit(wonScreenBackground, wonScreenBackgroundTopLeft)
 
+##########################################
+####### SUPER POWERS FUNCTIONS ###########
+##########################################
+
+#the first power  will be to become faster every time you score
+def applyExtraSpeed(player, guestPlayer):
+    if player.scoredGoal:
+        player.extraSpeed += 3/4
+
+    elif guestPlayer.scoredGoal:
+        guestPlayer.extraSpeed += 3/4
+
+#applies super jump to the player who is hitting the ball more often, aka being more engaging
+def applySuperJump(player, guestPlayer, time):
+    if time % 200 == 0:
+        print("Hi!")
+        if player.collidedTimes > guestPlayer.collidedTimes:
+            player.jumpHeight += 1
+        elif guestPlayer.collidedTimes > player.collidedTimes:
+            guestPlayer.jumpHeight += 1
+
+#if someone is losing by 3 they get frozen by a certain amount of time
+def applyGetFrozen(player, guestPlayer, time):
+
+    timeFrozen = None
+
+    if (player.goalCount - guestPlayer.goalCount) % 3 == 0 and player.goalCount + guestPlayer.goalCount != 0 and not guestPlayer.frozen:
+        guestPlayer.frozen = True
+        timeFrozen = time
+
+    elif (guestPlayer.goalCount - player.goalCount) % 3 == 0 and player.goalCount + guestPlayer.goalCount != 0 and not player.frozen and not guestPlayer.frozen:
+        player.frozen = True
+        timeFrozen = time
+        print(f'Difference of Goals: {guestPlayer.goalCount - player.goalCount} \n %3 = {(guestPlayer.goalCount - player.goalCount) % 3}')
+    
+    return timeFrozen
+
+#this function calls all the superpowers and applies them all together
+def applyPowers(player, guestPlayer, time):
+
+    applyExtraSpeed(player, guestPlayer)
+    #applySuperJump(player, guestPlayer, time)
+    timeFrozen = applyGetFrozen(player, guestPlayer, time)
+
+    return timeFrozen
+
 ###################################################
 ###################################################
 ############## MAIN GAME LOOP #####################
@@ -919,8 +1093,13 @@ runPygame = True
 firstRun = True
 
 while runPygame:
+    time += 1
 
-    #createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth)
+    timeFrozen = applyPowers(player, guestPlayer, time)
+
+    if isinstance(timeFrozen, int) and time - timeFrozen == 1:
+        player.frozen = False
+        guestPlayer.frozen = False
     
     if firstRun:
         startPlaying2PlayerButton = createStartPlaying2PlayerButton()
@@ -937,34 +1116,37 @@ while runPygame:
 
     #this makes sure the player can move continously so that we do not have to press the key multiple times
 
-    if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
-        player.x += 6                  #0.15
-        player.rectangleX = player.x
-    
-    
-    if keyPressed[pygame.K_LEFT] and player.x >= goalWidth - player.width + 20:         #the purpose of the and is to ensure the player does not go outside of the left bound
-        player.x -= 6                       #0.15
-        player.rectangleX = player.x
-    
-    if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
-        player.jumping = True
-    
-    if player.jumping:
-        player.jump(soccer)
+    if not player.frozen:
+
+        if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
+            player.x += 6 + player.extraSpeed                 #0.15
+            player.rectangleX = player.x
+        
+        if keyPressed[pygame.K_LEFT] and player.x >= goalWidth - player.width + 20:         #the purpose of the and is to ensure the player does not go outside of the left bound
+            player.x -= abs(6 + player.extraSpeed)                   #0.15
+            player.rectangleX = player.x
+        
+        if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
+            player.jumping = True
+        
+        if player.jumping:
+            player.jump(soccer)
 
     #To move the guest player... 
 
-    if keyPressed[pygame.K_s] and guestPlayer.x + guestPlayer.width <= widthScreen - goalWidth + guestPlayer.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
-        guestPlayer.x += 6
-    
-    if keyPressed[pygame.K_a] and guestPlayer.x >= goalWidth - guestPlayer.width + 20:          #the purpose of this and is to ensure the player does not go outside of the left bound                                 
-        guestPlayer.x -= 6
-    
-    if not guestPlayer.jumping and keyPressed[pygame.K_SPACE]: 
-        guestPlayer.jumping = True
-    
-    if guestPlayer.jumping:
-        guestPlayer.jump(soccer)
+    if not guestPlayer.frozen:
+
+        if keyPressed[pygame.K_s] and guestPlayer.x + guestPlayer.width <= widthScreen - goalWidth + guestPlayer.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
+            guestPlayer.x += 6 + guestPlayer.extraSpeed
+        
+        if keyPressed[pygame.K_a] and guestPlayer.x >= goalWidth - guestPlayer.width + 20:          #the purpose of this and is to ensure the player does not go outside of the left bound                                 
+            guestPlayer.x -= 6 - guestPlayer.extraSpeed
+        
+        if not guestPlayer.jumping and keyPressed[pygame.K_SPACE]: 
+            guestPlayer.jumping = True
+        
+        if guestPlayer.jumping:
+            guestPlayer.jump(soccer)
     
 
     checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
