@@ -162,10 +162,8 @@ class Ball(object):
             soccer.x = widthScreen - soccer.width
 
     def checkForCollisionPostofGoal(self, goalHeight, goalWidth, widthScreen, heightScreen):
-        if (self.y >= 0 and
-        (self.y + self.height <= heightScreen - goalHeight + 30) and 
-        ( (self.x <= goalWidth) or
-        (self.x + self.width >= widthScreen - goalWidth))):
+        if ((self.y <= heightScreen - goalHeight - 25) and 
+        ((self.x + self.width >= widthScreen - goalWidth + 3) or (self.x <= goalWidth - 3))):
             self.BDX *= -1
             if self.BDX < 0:
                 self.x -= 5
@@ -177,8 +175,7 @@ class Ball(object):
         #Check for goal in the left
         ###########################
 
-        #I am just going to add the 5 to account for the post
-        if ((self.x < goalWidth - self.width) and (self.y + self.height > heightScreen - goalHeight + 30)):
+        if (self.x + self.width < goalWidth + 5) and self.y > heightScreen - goalHeight - 25:
             self.x = 0
             player.scoredGoal = True
             self.BDX = 0
@@ -196,7 +193,7 @@ class Ball(object):
         ############################
         #Check for goal in the right
         ############################
-        if self.x + self.width > (widthScreen - goalWidth + 1.5*self.width) and self.y + self.height > (heightScreen - goalHeight + 30):
+        if self.x + self.width > (widthScreen - goalWidth + 1.5*self.width) and self.y > heightScreen - goalHeight - 25:
             self.x = widthScreen - self.width
             guestPlayer.scoredGoal = True
             self.BDX = 0
@@ -633,6 +630,7 @@ jumpImgShowing = False
 speedImgShowing = False
 xJumpImg, yJumpImg = ((random.randint(widthScreen//2 - 300, widthScreen//2 + 300), 40))
 speedX, speedY = (random.randint(widthScreen//2 - 300, widthScreen//2 + 300), 40)
+goalPost = 25
 ###################################
 #let's create three objects, our player, the other player and the soccer ball
 #####################################################
@@ -1082,7 +1080,6 @@ def applyExtraSpeed(player, guestPlayer, time, screen):
     elif (((player.x + player.width > speedX + 10 and player.x < speedX) or 
     (player.x < speedX - 10 and player.x - player.width > speedX + 30)) and player.y + player.height >= 560
     and speedImgShowing and player.extraSpeed != 3 and not player.jumping):
-        print(player.y + player.height)
         player.extraSpeed += 0.5
         speedY = 30
         speedImgShowing = False
@@ -1168,7 +1165,6 @@ firstRun = True
 while runPygame:
     time += 1
 
-    print(xJumpImg, player.x)
     #apply the jumpImage powerup if it is showing
     if jumpImgShowing and yJumpImg < heightScreen - 30:
         yJumpImg += 5
@@ -1181,7 +1177,6 @@ while runPygame:
         jumpImgShowing = False
         player.jumpHeight += 0.5
         player.jumpHeightSecure += 0.5
-        print("+1")
 
     #check for the other player
     elif(((guestPlayer.x + guestPlayer.width > xJumpImg + 10 and guestPlayer.x < xJumpImg) or
