@@ -37,6 +37,8 @@ playerImg = pygame.image.load("Shin Chan Right.png")
 #Goal Image gotten from: https://www.seekpng.com/idown/u2q8e6y3t4w7y3r5_soccer-goal-sprite-006-soccer-goal-sprite-sheet/
 goalLeftImg = pygame.image.load("Goal Left.png")
 goalRightImg = pygame.image.load("Goal Right.png")
+#Up Icon made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
+superJumpImg = pygame.image.load("Super Jump.png")
 
 goalHeight = 250
 goalWidth = 127
@@ -623,6 +625,10 @@ collidedTimes = 0
 frozen = False
 timeFrozen = None
 wonGame = 7
+checkFrozen = False
+jumpImgShowing = False
+xJumpImg = widthScreen//2
+yJumpImg = 40
 ###################################
 #let's create three objects, our player, the other player and the soccer ball
 #####################################################
@@ -1059,8 +1065,9 @@ def applyExtraSpeed(player, guestPlayer):
         guestPlayer.extraSpeed += 3/4
 
 #applies super jump to the player who is hitting the ball more often, aka being more engaging
-def applySuperJump(player, guestPlayer, time):
+def applySuperJump(player, guestPlayer, time, superJumpImg, screen):
     if time % 200 == 0:
+        screen.blit(superJumpImg, (200, 50))
         if player.collidedTimes > guestPlayer.collidedTimes:
             player.jumpHeight += 1
             player.jumpHeightSecure += 1
@@ -1071,17 +1078,20 @@ def applySuperJump(player, guestPlayer, time):
 
 #if someone is losing by 3 they get frozen by a certain amount of time
 def applyGetFrozen(player, guestPlayer, time):
+    global checkFrozen
 
     if ((player.goalCount - guestPlayer.goalCount) % 3 == 0 and player.goalCount + guestPlayer.goalCount != 0 and not guestPlayer.frozen
-    and player.goalCount > guestPlayer.goalCount):
+    and player.goalCount > guestPlayer.goalCount and not checkFrozen):
         guestPlayer.frozen = True
         timeFrozen = time
+        checkFrozen = True
         return timeFrozen
 
     elif ((guestPlayer.goalCount - player.goalCount) % 3 == 0 and player.goalCount + guestPlayer.goalCount != 0 and not player.frozen 
-    and guestPlayer.goalCount > player.goalCount) :
+    and guestPlayer.goalCount > player.goalCount and not checkFrozen) :
         player.frozen = True
         timeFrozen = time
+        checkFrozen = True
         return timeFrozen
         print(f'Difference of Goals: {guestPlayer.goalCount - player.goalCount} \n %3 = {(guestPlayer.goalCount - player.goalCount) % 3}')
 
@@ -1089,10 +1099,14 @@ def applyGetFrozen(player, guestPlayer, time):
 #power where the player scores a goal (opponent and ball move towards the goal)
 
 #this function calls all the superpowers and applies them all together
-def applyPowers(player, guestPlayer, time):
+def applyPowers(player, guestPlayer, time, superJumpImg, screen, x, y):
+    global jumpImgShowing
 
     applyExtraSpeed(player, guestPlayer)
-    #applySuperJump(player, guestPlayer, time)
+    if time - 250 == 0 and not jumpImgShowing and time != 0:
+        screen.blit(superJumpImg, (x,y))
+        jumpImgShowing = True
+    applySuperJump(player, guestPlayer, time, superJumpImg, screen)
     timeFrozen = applyGetFrozen(player, guestPlayer, time)
 
     return timeFrozen
@@ -1118,14 +1132,18 @@ firstRun = True
 
 while runPygame:
     time += 1
-    timeFrozenMaybe = applyPowers(player, guestPlayer, time)
-    if isinstance(timeFrozenMaybe, int):
-        timeFrozen = timeFrozenMaybe
-        print("Hello", timeFrozen)
+    #apply the jumpImage powerup if it is showing
+    if jumpImgShowing and yJumpImg < heightScreen - 40:
+        yJumpImg += 10
+    
+    possibleTimeFrozen = applyPowers(player, guestPlayer, time, superJumpImg, screen, xJumpImg, yJumpImg)
+    if isinstance(possibleTimeFrozen, int):
+        timeFrozen = possibleTimeFrozen
     
     if isinstance(timeFrozen, int) and (time - timeFrozen) == 25:
         player.frozen = False
         guestPlayer.frozen = False
+        checkFrozen = False
     
     if firstRun:
         startPlaying2PlayerButton = createStartPlaying2PlayerButton()
@@ -1166,7 +1184,7 @@ while runPygame:
             guestPlayer.x += 6 + guestPlayer.extraSpeed
         
         if keyPressed[pygame.K_a] and guestPlayer.x >= goalWidth - guestPlayer.width + 20:          #the purpose of this and is to ensure the player does not go outside of the left bound                                 
-            guestPlayer.x -= 6 - guestPlayer.extraSpeed
+            guestPlayer.x -= 6 + guestPlayer.extraSpeed
         
         if not guestPlayer.jumping and keyPressed[pygame.K_SPACE]: 
             guestPlayer.jumping = True
@@ -1208,6 +1226,8 @@ while runPygame:
     screen.blit(goalLeftImg, (0, heightScreen - goalHeight))
     screen.blit(goalRightImg, (widthScreen - goalWidth, heightScreen - goalHeight))
     createGoalCount(player, guestPlayer, screen, widthScreen)
+    if jumpImgShowing:
+        screen.blit(superJumpImg, (xJumpImg, yJumpImg))
     pygame.display.flip()
 
     firstRun = False
