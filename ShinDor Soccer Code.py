@@ -13,6 +13,7 @@ import math
 import time
 import numpy as np
 from pygame import mixer
+import random
 
 pygame.init()
 
@@ -39,6 +40,8 @@ goalLeftImg = pygame.image.load("Goal Left.png")
 goalRightImg = pygame.image.load("Goal Right.png")
 #Up Icon made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
 superJumpImg = pygame.image.load("Super Jump.png")
+#Run Fast Icon: <div>Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+runFastImg = pygame.image.load("Run Fast.png")
 
 goalHeight = 250
 goalWidth = 127
@@ -627,8 +630,9 @@ timeFrozen = None
 wonGame = 7
 beenFreezed = False
 jumpImgShowing = False
-xJumpImg = widthScreen//2
-yJumpImg = 40
+speedImgShowing = False
+xJumpImg, yJumpImg = ((random.randint(widthScreen//2 - 300, widthScreen//2 + 300), 40))
+speedX, speedY = (random.randint(widthScreen//2 - 300, widthScreen//2 + 300), 40)
 ###################################
 #let's create three objects, our player, the other player and the soccer ball
 #####################################################
@@ -947,53 +951,18 @@ def hypotenuse(x, y):
 #convert from degree to radian
 def radian(angle):
     return angle * (math.pi/180)
-
-#implement an AI now using an algorithm
-def algorithmAI(cpu, soccer, widthScreen, goalWidth):
-    return 42
     
-
 #Create the screen that will be popped if we select "Single Player"
 def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth):
+    global jumpImgShowing
+    global yJumpImg
+    global timeFrozen
+
     singlePlayerScreen = True
 
     while singlePlayerScreen:
 
         clock.tick(1000)
-
-        #apply the jumpImage powerup if it is showing
-        if jumpImgShowing and yJumpImg < heightScreen - 40:
-            yJumpImg += 5
-
-        #check if the image has hit ground and check if any player gets the jump icon
-        elif (player.x <= xJumpImg - 10 and jumpImgShowing and player.jumpHeightSecure != 9.5
-        and not player.jumping):
-            print("YOOO!\n")
-            yJumpImg = 30
-            jumpImgShowing = False
-            player.jumpHeight += 0.5
-            player.jumpHeightSecure += 0.5
-            print("+1")
-
-        #check for the other player
-        elif (guestPlayer.x + guestPlayer.width > xJumpImg + 10 and jumpImgShowing and guestPlayer.jumpHeightSecure != 9.5
-        and not guestPlayer.jumping):
-            yJumpImg = 30
-            jumpImgShowing = False
-            guestPlayer.jumpHeight += 0.5
-            guestPlayer.jumpHeightSecure += 0.5
-
-        #the following code is applied to the freeze power
-        #this power can only be achieved once since it is supreme and will pretty much allow you a free goal
-        #if a player is winning by 3 goals the other player is frozen for a decent amount of seconds
-        possibleTimeFrozen = applyPowers(player, guestPlayer, time, superJumpImg, screen, xJumpImg, yJumpImg)
-        if isinstance(possibleTimeFrozen, int):
-            timeFrozen = possibleTimeFrozen
-        
-        if isinstance(timeFrozen, int) and (time - timeFrozen) == 150:
-            player.frozen = False
-            guestPlayer.frozen = False
-            beenFreezed = True
 
         applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
 
@@ -1050,6 +1019,9 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         screen.blit(goalLeftImg, (0, heightScreen - goalHeight))
         screen.blit(goalRightImg, (widthScreen - goalWidth, heightScreen - goalHeight))
         createGoalCount(player, guestPlayer, screen, widthScreen)
+        
+        if jumpImgShowing:
+            screen.blit(superJumpImg, (xJumpImg, yJumpImg))
     
         pygame.display.flip()
 
@@ -1094,21 +1066,44 @@ def createWonScreen(heightScreen, widthScreen):
 ##########################################
 
 #the first power  will be to become faster every time you score
-def applyExtraSpeed(player, guestPlayer):
-    if player.scoredGoal:
-        player.extraSpeed += 3/4
+def applyExtraSpeed(player, guestPlayer, time, screen):
+    global speedImgShowing
+    global heightScreen
+    global speedX
+    global speedY
+    if time % 300 == 0 and time != 0 and not speedImgShowing:
+        screen.blit(runFastImg,(speedX, speedY))
+        speedImgShowing = True
 
-    elif guestPlayer.scoredGoal:
-        guestPlayer.extraSpeed += 3/4
-        print(guestPlayer.extraSpeed)
+    elif speedImgShowing and speedY < heightScreen - 30:
+        speedY += 5
+
+    #check if the image has hit ground and check if any player gets the jump icon
+    elif (((player.x + player.width > speedX + 10 and player.x < speedX) or 
+    (player.x < speedX - 10 and player.x - player.width > speedX + 30)) and player.y + player.height >= 560
+    and speedImgShowing and player.extraSpeed != 3 and not player.jumping):
+        print(player.y + player.height)
+        player.extraSpeed += 0.5
+        speedY = 30
+        speedImgShowing = False
+
+    #check for the other player
+    elif (((guestPlayer.x + guestPlayer.width > speedX + 10 and guestPlayer.x < speedX) or 
+    (guestPlayer.x < speedX - 10 and guestPlayer.x - guestPlayer.width > speedX + 30)) and guestPlayer.y + guestPlayer.height >= 560
+    and speedImgShowing and guestPlayer.extraSpeed != 3 and not guestPlayer.jumping):
+        guestPlayer.extraSpeed += 0.5
+        speedY = 30
+        speedImgShowing = False
+
 
 #applies super jump to the player who is hitting the ball more often, aka being more engaging
 def applySuperJump(player, guestPlayer, time, superJumpImg, screen, x, y):
     global jumpImgShowing
 
-    if time % 300 == 0 and not jumpImgShowing and time != 0:
+    if time % 500 == 0 and not jumpImgShowing and time != 0 and not jumpImgShowing:
         screen.blit(superJumpImg, (x,y))
         jumpImgShowing = True
+
 
 #if someone is losing by 3 they get frozen by a certain amount of time
 def applyGetFrozen(player, guestPlayer, time, screen):
@@ -1143,9 +1138,8 @@ def applyGetFrozen(player, guestPlayer, time, screen):
 def applyPowers(player, guestPlayer, time, superJumpImg, screen, x, y):
     global jumpImgShowing
 
-    applyExtraSpeed(player, guestPlayer)
+    applyExtraSpeed(player, guestPlayer, time, screen)
 
-    #apply jump power
     applySuperJump(player, guestPlayer, time, superJumpImg, screen, x, y)
 
     timeFrozen = applyGetFrozen(player, guestPlayer, time, screen)
@@ -1174,14 +1168,15 @@ firstRun = True
 while runPygame:
     time += 1
 
+    print(xJumpImg, player.x)
     #apply the jumpImage powerup if it is showing
-    if jumpImgShowing and yJumpImg < heightScreen - 40:
+    if jumpImgShowing and yJumpImg < heightScreen - 30:
         yJumpImg += 5
 
     #check if the image has hit ground and check if any player gets the jump icon
-    elif (player.x <= xJumpImg - 10 and jumpImgShowing and player.jumpHeightSecure != 9.5
-    and not player.jumping):
-        print("YOOO!\n")
+    elif (((player.x + player.width > xJumpImg + 10 and player.x < xJumpImg) or
+    (player.x < xJumpImg - 10 and player.x + player.width > xJumpImg + 30)) and player.y + player.height >= 560 and
+    jumpImgShowing and player.jumpHeightSecure != 9.5 and not player.jumping):
         yJumpImg = 30
         jumpImgShowing = False
         player.jumpHeight += 0.5
@@ -1189,12 +1184,14 @@ while runPygame:
         print("+1")
 
     #check for the other player
-    elif (guestPlayer.x + guestPlayer.width > xJumpImg + 10 and jumpImgShowing and guestPlayer.jumpHeightSecure != 9.5
-    and not guestPlayer.jumping):
+    elif(((guestPlayer.x + guestPlayer.width > xJumpImg + 10 and guestPlayer.x < xJumpImg) or
+    (guestPlayer.x < xJumpImg - 10 and guestPlayer.x + guestPlayer.width > xJumpImg + 30)) and guestPlayer.y + player.height >= 560 and
+    jumpImgShowing and guestPlayer.jumpHeightSecure != 9.5 and not guestPlayer.jumping):
         yJumpImg = 30
         jumpImgShowing = False
         guestPlayer.jumpHeight += 0.5
         guestPlayer.jumpHeightSecure += 0.5
+
 
     #the following code is applied to the freeze power
     #this power can only be achieved once since it is supreme and will pretty much allow you a free goal
@@ -1289,8 +1286,13 @@ while runPygame:
     screen.blit(goalLeftImg, (0, heightScreen - goalHeight))
     screen.blit(goalRightImg, (widthScreen - goalWidth, heightScreen - goalHeight))
     createGoalCount(player, guestPlayer, screen, widthScreen)
+
     if jumpImgShowing:
         screen.blit(superJumpImg, (xJumpImg, yJumpImg))
+    
+    if speedImgShowing:
+        screen.blit(runFastImg, (speedX, speedY))
+
     pygame.display.flip()
 
     firstRun = False
