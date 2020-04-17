@@ -209,7 +209,7 @@ class Ball(object):
     
     def checkForBallCollisionsAndGravity(self, heightScreen, widthScreen, epsilon):
 
-        self.applyGravity()
+        self.applyGravity() 
         self.applyXMovement()
         self.checkForCollisionWithGround(heightScreen)
         self.checkForAllowedXDirectionBall(widthScreen)
@@ -248,7 +248,7 @@ class SoccerPlayer(object):
             self.jumpHeight -= 1
             self.checkPlayerHittingBall(soccer, heightScreen, widthScreen)
             self.checkBallHitsMiddleHead(soccer, epsilon)
-
+        
         #if ourJumpHeight surpasses negative 10 we have reached ground and hence we stop jumping
         elif self.jumpHeight < -self.jumpHeightSecure:
             self.jumpHeight = self.jumpHeightSecure
@@ -625,7 +625,7 @@ collidedTimes = 0
 frozen = False
 timeFrozen = None
 wonGame = 7
-checkFrozen = False
+beenFreezed = False
 jumpImgShowing = False
 xJumpImg = widthScreen//2
 yJumpImg = 40
@@ -642,9 +642,12 @@ guestPlayer = DoraemonPlayer(playerWidth, playerHeight, guestPlayerX, guestPlaye
 ############################################################################
 def checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen):
     #at the beginning of the loop make sure to reset the goal varibale if there has previously been a goal scored
-    if player.scoredGoal == True:
+    if player.scoredGoal:
         player.scoredGoal = False
         screen.blit(textGoal, textGoalRectangle)
+
+    elif guestPlayer.scoredGoal:
+        guestPlayer.scoredGoal = False
 
     soccer.applyXMovement()
 
@@ -958,6 +961,40 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
 
         clock.tick(1000)
 
+        #apply the jumpImage powerup if it is showing
+        if jumpImgShowing and yJumpImg < heightScreen - 40:
+            yJumpImg += 5
+
+        #check if the image has hit ground and check if any player gets the jump icon
+        elif (player.x <= xJumpImg - 10 and jumpImgShowing and player.jumpHeightSecure != 9.5
+        and not player.jumping):
+            print("YOOO!\n")
+            yJumpImg = 30
+            jumpImgShowing = False
+            player.jumpHeight += 0.5
+            player.jumpHeightSecure += 0.5
+            print("+1")
+
+        #check for the other player
+        elif (guestPlayer.x + guestPlayer.width > xJumpImg + 10 and jumpImgShowing and guestPlayer.jumpHeightSecure != 9.5
+        and not guestPlayer.jumping):
+            yJumpImg = 30
+            jumpImgShowing = False
+            guestPlayer.jumpHeight += 0.5
+            guestPlayer.jumpHeightSecure += 0.5
+
+        #the following code is applied to the freeze power
+        #this power can only be achieved once since it is supreme and will pretty much allow you a free goal
+        #if a player is winning by 3 goals the other player is frozen for a decent amount of seconds
+        possibleTimeFrozen = applyPowers(player, guestPlayer, time, superJumpImg, screen, xJumpImg, yJumpImg)
+        if isinstance(possibleTimeFrozen, int):
+            timeFrozen = possibleTimeFrozen
+        
+        if isinstance(timeFrozen, int) and (time - timeFrozen) == 150:
+            player.frozen = False
+            guestPlayer.frozen = False
+            beenFreezed = True
+
         applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
 
         checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
@@ -1063,37 +1100,41 @@ def applyExtraSpeed(player, guestPlayer):
 
     elif guestPlayer.scoredGoal:
         guestPlayer.extraSpeed += 3/4
+        print(guestPlayer.extraSpeed)
 
 #applies super jump to the player who is hitting the ball more often, aka being more engaging
-def applySuperJump(player, guestPlayer, time, superJumpImg, screen):
-    if time % 200 == 0:
-        screen.blit(superJumpImg, (200, 50))
-        if player.collidedTimes > guestPlayer.collidedTimes:
-            player.jumpHeight += 1
-            player.jumpHeightSecure += 1
+def applySuperJump(player, guestPlayer, time, superJumpImg, screen, x, y):
+    global jumpImgShowing
 
-        elif guestPlayer.collidedTimes > player.collidedTimes:
-            guestPlayer.jumpHeight += 1
-            guestPlayer.jumpHeightSecure += 1
+    if time % 300 == 0 and not jumpImgShowing and time != 0:
+        screen.blit(superJumpImg, (x,y))
+        jumpImgShowing = True
 
 #if someone is losing by 3 they get frozen by a certain amount of time
-def applyGetFrozen(player, guestPlayer, time):
-    global checkFrozen
+def applyGetFrozen(player, guestPlayer, time, screen):
+    global beenFreezed
+    red = (255, 0, 0)
+    black = (0, 0, 0)
+    font = pygame.font.Font('freesansbold.ttf', 32)
+    textFrozen = font.render('Someone has been outscored and hence frozen!', True, red, black)
+    textFrozenRect = textFrozen.get_rect()
+    textFrozenRect.center = (widthScreen//2, 300)
 
     if ((player.goalCount - guestPlayer.goalCount) % 3 == 0 and player.goalCount + guestPlayer.goalCount != 0 and not guestPlayer.frozen
-    and player.goalCount > guestPlayer.goalCount and not checkFrozen):
+    and player.goalCount > guestPlayer.goalCount and not beenFreezed):
         guestPlayer.frozen = True
         timeFrozen = time
-        checkFrozen = True
+        beenFreezed = True
+        #screen.blit(textFrozenRect, (widthScreen//2 - 20, 300))
         return timeFrozen
 
     elif ((guestPlayer.goalCount - player.goalCount) % 3 == 0 and player.goalCount + guestPlayer.goalCount != 0 and not player.frozen 
-    and guestPlayer.goalCount > player.goalCount and not checkFrozen) :
+    and guestPlayer.goalCount > player.goalCount and not beenFreezed) :
         player.frozen = True
         timeFrozen = time
-        checkFrozen = True
+        beenFreezed = True
+        #screen.blit(textFrozenRect, (widthScreen//2 - 20, 300))
         return timeFrozen
-        print(f'Difference of Goals: {guestPlayer.goalCount - player.goalCount} \n %3 = {(guestPlayer.goalCount - player.goalCount) % 3}')
 
 
 #power where the player scores a goal (opponent and ball move towards the goal)
@@ -1103,11 +1144,11 @@ def applyPowers(player, guestPlayer, time, superJumpImg, screen, x, y):
     global jumpImgShowing
 
     applyExtraSpeed(player, guestPlayer)
-    if time - 250 == 0 and not jumpImgShowing and time != 0:
-        screen.blit(superJumpImg, (x,y))
-        jumpImgShowing = True
-    applySuperJump(player, guestPlayer, time, superJumpImg, screen)
-    timeFrozen = applyGetFrozen(player, guestPlayer, time)
+
+    #apply jump power
+    applySuperJump(player, guestPlayer, time, superJumpImg, screen, x, y)
+
+    timeFrozen = applyGetFrozen(player, guestPlayer, time, screen)
 
     return timeFrozen
 
@@ -1132,18 +1173,40 @@ firstRun = True
 
 while runPygame:
     time += 1
+
     #apply the jumpImage powerup if it is showing
     if jumpImgShowing and yJumpImg < heightScreen - 40:
-        yJumpImg += 10
-    
+        yJumpImg += 5
+
+    #check if the image has hit ground and check if any player gets the jump icon
+    elif (player.x <= xJumpImg - 10 and jumpImgShowing and player.jumpHeightSecure != 9.5
+    and not player.jumping):
+        print("YOOO!\n")
+        yJumpImg = 30
+        jumpImgShowing = False
+        player.jumpHeight += 0.5
+        player.jumpHeightSecure += 0.5
+        print("+1")
+
+    #check for the other player
+    elif (guestPlayer.x + guestPlayer.width > xJumpImg + 10 and jumpImgShowing and guestPlayer.jumpHeightSecure != 9.5
+    and not guestPlayer.jumping):
+        yJumpImg = 30
+        jumpImgShowing = False
+        guestPlayer.jumpHeight += 0.5
+        guestPlayer.jumpHeightSecure += 0.5
+
+    #the following code is applied to the freeze power
+    #this power can only be achieved once since it is supreme and will pretty much allow you a free goal
+    #if a player is winning by 3 goals the other player is frozen for a decent amount of seconds
     possibleTimeFrozen = applyPowers(player, guestPlayer, time, superJumpImg, screen, xJumpImg, yJumpImg)
     if isinstance(possibleTimeFrozen, int):
         timeFrozen = possibleTimeFrozen
     
-    if isinstance(timeFrozen, int) and (time - timeFrozen) == 25:
+    if isinstance(timeFrozen, int) and (time - timeFrozen) == 150:
         player.frozen = False
         guestPlayer.frozen = False
-        checkFrozen = False
+        beenFreezed = True
     
     if firstRun:
         startPlaying2PlayerButton = createStartPlaying2PlayerButton()
