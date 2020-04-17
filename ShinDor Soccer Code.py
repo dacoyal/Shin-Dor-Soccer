@@ -111,6 +111,7 @@ class Ball(object):
         #this function checks for a collision with the ground and if so changes the
         #direction of the ball
     def checkForCollisionWithGround(self, heightScreen):
+        bouncing_Sound = mixer.Sound("Bounce.mp3")
         #check if the ball is going more downwards than the "floor" of the screen
         if self.y + self.height >= heightScreen and self.BDY > 0:
             self.BDY *= -1
@@ -120,12 +121,16 @@ class Ball(object):
                 self.BDX -= self.friction
             elif self.BDX < 0:
                 self.BDX += self.friction
+            
+            if abs(soccer.BDY) > 2:
+                bouncing_Sound.play()
         #checks if the ball is barely bouncing
         #soccer.y + soccer.height > heightScreen + 3
         elif self.y + self.height > heightScreen:
             self.BDY = 0
             self.y == heightScreen - self.width
             self.gravity = 0
+
             ########################################
             #FRICTION
             ########################################
@@ -209,7 +214,7 @@ class Ball(object):
 
 class SoccerPlayer(object):
 
-    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen):
+    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure):
         self.width = width
         self.height = height
         self.x = x
@@ -222,6 +227,7 @@ class SoccerPlayer(object):
         self.extraSpeed = extraSpeed
         self.collidedTimes = collidedTimes
         self.frozen = frozen
+        self.jumpHeightSecure = jumpHeightSecure
 
     def jump(self, soccer):
         #if the jumpHeight varible is greater than 0 this means the y coordinate of our player should be less positive so that it moves upwards
@@ -235,15 +241,15 @@ class SoccerPlayer(object):
 
         #if our jumpHeight is negative our y coordinate of our player should be more positive so that it goes back to the floor
 
-        elif self.jumpHeight >= -jumpHeight and self.jumpHeight <= 0:
+        elif self.jumpHeight >= -self.jumpHeightSecure and self.jumpHeight <= 0:
             self.y += 1/2 * (self.jumpHeight ** 2)
             self.jumpHeight -= 1
             self.checkPlayerHittingBall(soccer, heightScreen, widthScreen)
             self.checkBallHitsMiddleHead(soccer, epsilon)
 
         #if ourJumpHeight surpasses negative 10 we have reached ground and hence we stop jumping
-        elif self.jumpHeight < -jumpHeight:
-            self.jumpHeight = jumpHeight
+        elif self.jumpHeight < -self.jumpHeightSecure:
+            self.jumpHeight = self.jumpHeightSecure
             self.jumping = False
             self.checkPlayerHittingBall(soccer, heightScreen, widthScreen)
             self.checkBallHitsMiddleHead(soccer, epsilon)
@@ -286,6 +292,7 @@ class SoccerPlayer(object):
             soccer.BDX = -10*math.cos(70)
             collided = True
             self.collidedTimes += 1
+    
         #if it collides in the right 
         elif ((self.jumping) and (soccer.y + soccer.height <= self.y + self.width - 5) and
         (soccer.y >= self.y) and (soccer.x + soccer.width <= self.x + self.width) and 
@@ -294,6 +301,7 @@ class SoccerPlayer(object):
             soccer.BDX = 10*math.cos(70)
             collided = True
             self.collidedTimes += 1
+
         #This checks if the ball was hit with the upper half of the body
         if ((soccer.y >= self.y) and 
         (soccer.y <= self.y + self.height/2) and 
@@ -314,7 +322,7 @@ class SoccerPlayer(object):
                 soccer.BDX -= 1
                 soccer.BDY = 5
                 soccer.x -= 5
-
+    
             collided = True
             self.collidedTimes += 1
 
@@ -327,6 +335,7 @@ class SoccerPlayer(object):
             if soccer.BDX == 0 and abs(soccer.BDY) < 2:
                 soccer.BDX = -3
                 soccer.applyXMovement()
+
             #this second if statement applies if the ball is bouncing
             elif soccer.BDX == 0 and soccer.gravity != 0:
                 soccer.BDX = -0.25
@@ -404,8 +413,8 @@ class SoccerPlayer(object):
 #We will make the collisions a little bit different for Doraemon since he has a wider head and different body than Shin Chan
 class DoraemonPlayer(SoccerPlayer):
     #we can call the init function from our soccerPlayer class since it will take the same values
-    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen):
-        super().__init__(width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen)
+    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure):
+        super().__init__(width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure)
 
 
     def checkPlayerHittingBall(self, soccer, heightScreen, widthScreen):
@@ -436,6 +445,7 @@ class DoraemonPlayer(SoccerPlayer):
             soccer.BDX = -7*math.cos(70)
             collided = True
             self.collidedTimes += 1
+
         #Im going to make it so if the player is jumping and the ball is hit by the player the ball goes upwards
 
         #checking if it collides in the left
@@ -445,6 +455,7 @@ class DoraemonPlayer(SoccerPlayer):
             soccer.BDX = -9*math.cos(70)
             collided = True
             self.collidedTimes += 1
+
         #if it collides in the right 
         elif ((self.jumping) and (soccer.y + soccer.height <= self.y + self.width - 5) and
         (soccer.y >= self.y) and (soccer.x + soccer.width <= self.x + self.width - 3) and
@@ -453,6 +464,7 @@ class DoraemonPlayer(SoccerPlayer):
             soccer.BDX = 8*math.cos(70)
             collided = True
             self.collidedTimes += 1
+
         #This checks if the ball was hit with the upper half of the body and
         if ((soccer.y >= self.y - 3) and 
         (soccer.y <= self.y + self.height/2) and 
@@ -506,7 +518,7 @@ class DoraemonPlayer(SoccerPlayer):
                 
             else:
                 soccer.BDX *= -1
-            
+
             soccer.x = self.x - 10
             collided = True
             self.collidedTimes += 1
@@ -568,6 +580,7 @@ class DoraemonPlayer(SoccerPlayer):
         (soccer.x + soccer.width <= self.x + self.width - 3)) and soccer.BDY > 0):
             soccer.BDY *= -1
             self.collidedTimes += 1
+
             return True
         return False
 
@@ -596,6 +609,7 @@ marginErrorBounce = 10
 epsilon = 1
 jumping = False
 jumpHeight = 8
+secureJumpHeight = jumpHeight
 scoredGoal = False
 goalCount = 0
 green = (0, 255, 0)
@@ -608,12 +622,13 @@ extraSpeed = 0
 collidedTimes = 0
 frozen = False
 timeFrozen = None
+wonGame = 7
 ###################################
 #let's create three objects, our player, the other player and the soccer ball
 #####################################################
 soccer = Ball(soccerX, soccerY, soccerWidth, soccerHeight, soccerBDX, soccerBDY, friction, soccerGravity, airResistance)
-player = SoccerPlayer(playerWidth, playerHeight, playerX, playerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen)
-guestPlayer = DoraemonPlayer(playerWidth, playerHeight, guestPlayerX, guestPlayerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen)
+player = SoccerPlayer(playerWidth, playerHeight, playerX, playerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, secureJumpHeight)
+guestPlayer = DoraemonPlayer(playerWidth, playerHeight, guestPlayerX, guestPlayerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, secureJumpHeight)
 
 
 #############################################################################
@@ -815,7 +830,6 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
     
     elif cpu.x + cpu.width < soccer.x - 20:
         cpu.x += 3.5
-        #print(f'Moved forward \n')
     
     #check if the cpu needs to jump to hit the ball
     if ((soccer.y  + soccer.height < cpu.y) and (soccer.x - (cpu.x + cpu.width) < 5) and (soccer.x > cpu.x + cpu.width) or (cpu.jumping)):
@@ -840,10 +854,8 @@ def mediumAI(cpu, soccer, widthScreen, goalWidth):
     #if statemetns attempts the player to better hit the ball if it is coming at it when it is at the goal line clearance
     if cpu.x == goalWidth//2 and soccer.BDX < 0 and abs(soccer.x - cpu.x - cpu.width) <= 50:
         if abs(soccer.y + soccer.width - cpu.y) >= 5 and abs(soccer.y + soccer.width - cpu.y) <= 10:
-            print("Hello")
             cpu.jump(soccer)
         else:
-            print("Hello too")
             cpu.x += 6
             cpu.jump(soccer)
 
@@ -876,12 +888,10 @@ def mediumAI(cpu, soccer, widthScreen, goalWidth):
     
     #if the ball is right above the CPU make it jump
     if (soccer.x - (cpu.x + cpu.width) < 0 and soccer.x - (cpu.x + cpu.width) > -81) and abs(cpu.y - (soccer.y + soccer.height)) < 10:
-        print("Hi \n")
         cpu.jump(soccer)
         timeJumped = time
     
     elif (soccer.x <= goalWidth + cpu.width + 30 and soccer.BDY > 0) and time:
-        print("Hey \n")
         cpu.jump(soccer)
 
     elif abs(cpu.x + cpu.width - soccer.x) <= 20 and abs(soccer.y + soccer.height - cpu.y) <= 25 and soccer.BDY > 0:
@@ -911,7 +921,6 @@ def mediumAI(cpu, soccer, widthScreen, goalWidth):
     
     elif cpu.x + cpu.width < soccer.x - 20:
         cpu.x += 3.5
-        #print(f'Moved forward \n')
     
     #check if the cpu needs to jump to hit the ball
     if ((soccer.y  + soccer.height < cpu.y) and (soccer.x - (cpu.x + cpu.width) < 5) and (soccer.x > cpu.x + cpu.width) or (cpu.jumping)):
@@ -1052,27 +1061,32 @@ def applyExtraSpeed(player, guestPlayer):
 #applies super jump to the player who is hitting the ball more often, aka being more engaging
 def applySuperJump(player, guestPlayer, time):
     if time % 200 == 0:
-        print("Hi!")
         if player.collidedTimes > guestPlayer.collidedTimes:
             player.jumpHeight += 1
+            player.jumpHeightSecure += 1
+
         elif guestPlayer.collidedTimes > player.collidedTimes:
             guestPlayer.jumpHeight += 1
+            guestPlayer.jumpHeightSecure += 1
 
 #if someone is losing by 3 they get frozen by a certain amount of time
 def applyGetFrozen(player, guestPlayer, time):
 
-    timeFrozen = None
-
-    if (player.goalCount - guestPlayer.goalCount) % 3 == 0 and player.goalCount + guestPlayer.goalCount != 0 and not guestPlayer.frozen:
+    if ((player.goalCount - guestPlayer.goalCount) % 3 == 0 and player.goalCount + guestPlayer.goalCount != 0 and not guestPlayer.frozen
+    and player.goalCount > guestPlayer.goalCount):
         guestPlayer.frozen = True
         timeFrozen = time
+        return timeFrozen
 
-    elif (guestPlayer.goalCount - player.goalCount) % 3 == 0 and player.goalCount + guestPlayer.goalCount != 0 and not player.frozen and not guestPlayer.frozen:
+    elif ((guestPlayer.goalCount - player.goalCount) % 3 == 0 and player.goalCount + guestPlayer.goalCount != 0 and not player.frozen 
+    and guestPlayer.goalCount > player.goalCount) :
         player.frozen = True
         timeFrozen = time
+        return timeFrozen
         print(f'Difference of Goals: {guestPlayer.goalCount - player.goalCount} \n %3 = {(guestPlayer.goalCount - player.goalCount) % 3}')
-    
-    return timeFrozen
+
+
+#power where the player scores a goal (opponent and ball move towards the goal)
 
 #this function calls all the superpowers and applies them all together
 def applyPowers(player, guestPlayer, time):
@@ -1082,6 +1096,16 @@ def applyPowers(player, guestPlayer, time):
     timeFrozen = applyGetFrozen(player, guestPlayer, time)
 
     return timeFrozen
+
+# from: https://www.cs.cmu.edu/~112/notes/notes-strings.html#basicFileIO
+def readFile(path):
+    with open(path, "rt") as f:
+        return f.read()
+
+#creates our leaderBoard
+def fillLeaderboard():
+    fileName = 'Leaderboard.csv'
+    leaderBoard = readFile(fileName)
 
 ###################################################
 ###################################################
@@ -1094,10 +1118,12 @@ firstRun = True
 
 while runPygame:
     time += 1
-
-    timeFrozen = applyPowers(player, guestPlayer, time)
-
-    if isinstance(timeFrozen, int) and time - timeFrozen == 1:
+    timeFrozenMaybe = applyPowers(player, guestPlayer, time)
+    if isinstance(timeFrozenMaybe, int):
+        timeFrozen = timeFrozenMaybe
+        print("Hello", timeFrozen)
+    
+    if isinstance(timeFrozen, int) and (time - timeFrozen) == 25:
         player.frozen = False
         guestPlayer.frozen = False
     
@@ -1162,6 +1188,7 @@ while runPygame:
     #######################################
     black = (0,0,0)
     green = (0, 255, 0)
+    red = (255, 0, 0)
     #rectangle for debugging purposes
     #rectangle of player1 and ellipse
     pygame.draw.rect(screen, black,(player.x + 18, player.y + 25, player.width - 38, player.height  - 28),5)
@@ -1171,7 +1198,7 @@ while runPygame:
     pygame.draw.rect(screen, black, (guestPlayer.x + 6, guestPlayer.y + 50, guestPlayer.width - 23, guestPlayer.height - 47), 5)
     pygame.draw.ellipse(screen, green, (guestPlayer.x - 5, guestPlayer.y - 5, guestPlayer.width + 2 , guestPlayer.height - 35), 4)
     ######################################
-
+    pygame.draw.polygon(screen, red,((widthScreen,heightScreen), (widthScreen - goalWidth,heightScreen), (widthScreen - goalWidth, heightScreen - goalHeight + 30)), 10)
     ##############################################
     #The following lines update the current position of the objects
     ##############################################
