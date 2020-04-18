@@ -22,6 +22,7 @@ widthScreen = 1100    #800
 heightScreen = 600  #600
 clock = pygame.time.Clock()
 screen = pygame.display.set_mode((widthScreen, heightScreen))
+#Image made by Daniela Ruiz Gomez
 screen.blit(pygame.image.load("Head Soccer Background Dani Edited.png"), (0,0))
 
 #Tile and Icon of the window
@@ -39,9 +40,9 @@ playerImg = pygame.image.load("Shin Chan Right.png")
 goalLeftImg = pygame.image.load("Goal Left.png")
 goalRightImg = pygame.image.load("Goal Right.png")
 #Up Icon made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
-superJumpImg = pygame.image.load("Super Jump.png")
-#Run Fast Icon: <div>Icons made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
-runFastImg = pygame.image.load("Run Fast.png")
+superJumpImg = pygame.image.load("Super Jump Dani Resized.png")
+#Image made by Daniela Ruiz Gomez
+runFastImg = pygame.image.load("Run Fast Dani Edited.png")
 
 goalHeight = 250
 goalWidth = 127
@@ -774,82 +775,84 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
     #first the AI should go towards the soccer
     epsilon = 10**-2
     #make sure the AI does not go out of bounds
-    if cpu.x <= goalWidth//2:
-        cpu.x = goalWidth//2
-    #make sure the AI does not go outside of the right allowed bound
-    if cpu.x + cpu.width >= widthScreen - goalWidth//2:
-        cpu.x = widthScreen - cpu.width - goalWidth//2
+    if not cpu.frozen:
 
-    #if statemetns attempts the player to better hit the ball if it is coming at it when it is at the goal line clearance
-    if cpu.x == goalWidth//2 and soccer.BDX < 0 and abs(soccer.x - cpu.x - cpu.width) <= 50:
-        if abs(soccer.y + soccer.width - cpu.y) >= 5 and abs(soccer.y + soccer.width - cpu.y) <= 10:
-            cpu.jump(soccer)
-        else:
-            cpu.x += 6
-            cpu.jump(soccer)
+        if cpu.x <= goalWidth//2:
+            cpu.x = goalWidth//2
+        #make sure the AI does not go outside of the right allowed bound
+        if cpu.x + cpu.width >= widthScreen - goalWidth//2:
+            cpu.x = widthScreen - cpu.width - goalWidth//2
 
-    #to make the AI attack more
-    if soccer.BDX > 0 and cpu.x >= widthScreen//2 :
-        cpu.x += 5
-    #make the AI to be able to realize when to defend
-    elif soccer.BDX < 0 and cpu.x >= widthScreen//2:
-        cpu.x -= 6
+        #if statemetns attempts the player to better hit the ball if it is coming at it when it is at the goal line clearance
+        if cpu.x == goalWidth//2 and soccer.BDX < 0 and abs(soccer.x - cpu.x - cpu.width) <= 50:
+            if abs(soccer.y + soccer.width - cpu.y) >= 5 and abs(soccer.y + soccer.width - cpu.y) <= 10:
+                cpu.jump(soccer)
+            else:
+                cpu.x += 6
+                cpu.jump(soccer)
 
-    if soccer.BDX < 0 and soccer.y + soccer.height < heightScreen - player.height and soccer.BDY < 0 and cpu.x >= goalWidth + 5 :
-        cpu.x -= 6
-        if abs(cpu.x - soccer.x) <= 20 and soccer.y + soccer.height > cpu.y:
-            cpu.x += 6
-    #to defend better the goal line
-    if soccer.x <= widthScreen//2 - goalWidth and soccer.BDX < 0 and cpu.x >= goalWidth - cpu.width:
-        cpu.x -= 6
-        if cpu.x < goalWidth - cpu.width:
-            cpu.x = goalWidth - cpu.width
-        if abs(soccer.y - cpu.y) <= 6 and abs(soccer.x - cpu.x + cpu.width) <= soccer.width and soccer.BDY > 0:
-            cpu.jump(soccer)
-    
-    #make the CPU attack more
-    if soccer.x >= widthScreen//2 and soccer.BDX > 0:
-        cpu.x += 2
+        #to make the AI attack more
+        if soccer.BDX > 0 and cpu.x >= widthScreen//2 :
+            cpu.x += 5
+        #make the AI to be able to realize when to defend
+        elif soccer.BDX < 0 and cpu.x >= widthScreen//2:
+            cpu.x -= 6
 
-    #if the  ball is close to the CPU make it move forward to hit the ball
-    if abs(soccer.x - (cpu.x + cpu.width)) <= 10 and soccer.BDX > 0:
-        cpu.x += 5
-    
-    #if the ball is right above the CPU make it jump
-    if (soccer.x - (cpu.x + cpu.width) < 0 and soccer.x - (cpu.x + cpu.width) > -81) and abs(cpu.y - (soccer.y + soccer.height)) < 10:
-        cpu.jump(soccer)
-    #check if the other player hits the ball and go backwards if so
-    if soccer.BDX >= 5*math.cos(50) and soccer.x >= widthScreen//2 + 100:
-        cpu.x -= 5
-    
-    #this makes the AI move backwards if the soccer ball is going bakcwards
-    elif abs(cpu.x + cpu.width - soccer.x) <= 65 and abs(cpu.x + cpu.width - soccer.x) >= 35 and  soccer.BDX < 0 and soccer.BDY > 0 :
-        cpu.x -= 6      
-    
-    #if the player hits the ball move backwards
-    elif player.checkPlayerHittingBall(soccer, heightScreen, widthScreen):
-        cpu.x -= 6
-    
-    #check if the ball is closer to the other player and if it is retrocede in case it hits the ball
-    elif abs(soccer.x + soccer.width - player.x) <= 5 and abs(soccer.x - cpu.x) > 5:
-        cpu.x -= 6
-
-    #if the soccer is not moving go towards it and hit it
-    elif soccer.BDX == 0:
-        if cpu.x + cpu.width < soccer.x:
-            cpu.x += 6
-    
-    elif cpu.x + cpu.width < soccer.x - 20:
-        cpu.x += 3.5
-    
-    #check if the cpu needs to jump to hit the ball
-    if ((soccer.y  + soccer.height < cpu.y) and (soccer.x - (cpu.x + cpu.width) < 5) and (soccer.x > cpu.x + cpu.width) or (cpu.jumping)):
-        if cpu.x + cpu.width < soccer.x:
+        if soccer.BDX < 0 and soccer.y + soccer.height < heightScreen - player.height and soccer.BDY < 0 and cpu.x >= goalWidth + 5 :
+            cpu.x -= 6
+            if abs(cpu.x - soccer.x) <= 20 and soccer.y + soccer.height > cpu.y:
+                cpu.x += 6
+        #to defend better the goal line
+        if soccer.x <= widthScreen//2 - goalWidth and soccer.BDX < 0 and cpu.x >= goalWidth - cpu.width:
+            cpu.x -= 6
+            if cpu.x < goalWidth - cpu.width:
+                cpu.x = goalWidth - cpu.width
+            if abs(soccer.y - cpu.y) <= 6 and abs(soccer.x - cpu.x + cpu.width) <= soccer.width and soccer.BDY > 0:
+                cpu.jump(soccer)
+        
+        #make the CPU attack more
+        if soccer.x >= widthScreen//2 and soccer.BDX > 0:
             cpu.x += 2
 
-        if cpu.jumpHeight + cpu.y <= soccer.y + soccer.height or cpu.jumping and soccer.y + soccer.width <= cpu.y:
+        #if the  ball is close to the CPU make it move forward to hit the ball
+        if abs(soccer.x - (cpu.x + cpu.width)) <= 10 and soccer.BDX > 0:
+            cpu.x += 5
+        
+        #if the ball is right above the CPU make it jump
+        if (soccer.x - (cpu.x + cpu.width) < 0 and soccer.x - (cpu.x + cpu.width) > -81) and abs(cpu.y - (soccer.y + soccer.height)) < 10:
             cpu.jump(soccer)
-            cpu.x += 2
+        #check if the other player hits the ball and go backwards if so
+        if soccer.BDX >= 5*math.cos(50) and soccer.x >= widthScreen//2 + 100:
+            cpu.x -= 5
+        
+        #this makes the AI move backwards if the soccer ball is going bakcwards
+        elif abs(cpu.x + cpu.width - soccer.x) <= 65 and abs(cpu.x + cpu.width - soccer.x) >= 35 and  soccer.BDX < 0 and soccer.BDY > 0 :
+            cpu.x -= 6      
+        
+        #if the player hits the ball move backwards
+        elif player.checkPlayerHittingBall(soccer, heightScreen, widthScreen):
+            cpu.x -= 6
+        
+        #check if the ball is closer to the other player and if it is retrocede in case it hits the ball
+        elif abs(soccer.x + soccer.width - player.x) <= 5 and abs(soccer.x - cpu.x) > 5:
+            cpu.x -= 6
+
+        #if the soccer is not moving go towards it and hit it
+        elif soccer.BDX == 0:
+            if cpu.x + cpu.width < soccer.x:
+                cpu.x += 6
+        
+        elif cpu.x + cpu.width < soccer.x - 20:
+            cpu.x += 3.5
+        
+        #check if the cpu needs to jump to hit the ball
+        if ((soccer.y  + soccer.height < cpu.y) and (soccer.x - (cpu.x + cpu.width) < 5) and (soccer.x > cpu.x + cpu.width) or (cpu.jumping)):
+            if cpu.x + cpu.width < soccer.x:
+                cpu.x += 2
+
+            if cpu.jumpHeight + cpu.y <= soccer.y + soccer.height or cpu.jumping and soccer.y + soccer.width <= cpu.y:
+                cpu.jump(soccer)
+                cpu.x += 2
 
 #medium level AI
 def mediumAI(cpu, soccer, widthScreen, goalWidth):
@@ -867,23 +870,23 @@ def mediumAI(cpu, soccer, widthScreen, goalWidth):
         if abs(soccer.y + soccer.width - cpu.y) >= 5 and abs(soccer.y + soccer.width - cpu.y) <= 10:
             cpu.jump(soccer)
         else:
-            cpu.x += 6
+            cpu.x += 6 + cpu.extraSpeed
             cpu.jump(soccer)
 
     #to make the AI attack more
     if soccer.BDX > 0 and cpu.x >= widthScreen//2 :
-        cpu.x += 5
+        cpu.x += 5 + cpu.extraSpeed
     #make the AI to be able to realize when to defend
     elif soccer.BDX < 0 and cpu.x >= widthScreen//2:
-        cpu.x -= 6
+        cpu.x -= (6 + cpu.extraSpeed)
 
     if soccer.BDX < 0 and soccer.y + soccer.height < heightScreen - player.height and soccer.BDY < 0 and cpu.x >= goalWidth + 5 :
-        cpu.x -= 6
+        cpu.x -= (6 + cpu.extraSpeed)
         if abs(cpu.x - soccer.x) <= 20 and soccer.y + soccer.height > cpu.y:
-            cpu.x += 6
+            cpu.x += (6 + cpu.extraSpeed)
     #to defend better the goal line
     if soccer.x <= widthScreen//2 - goalWidth and soccer.BDX < 0 and cpu.x >= goalWidth - cpu.width:
-        cpu.x -= 6
+        cpu.x -= (6 + cpu.extraSpeed)
         if cpu.x < goalWidth - cpu.width:
             cpu.x = goalWidth - cpu.width
         if abs(soccer.y - cpu.y) <= 6 and abs(soccer.x - cpu.x + cpu.width) <= soccer.width and soccer.BDY > 0:
@@ -891,11 +894,11 @@ def mediumAI(cpu, soccer, widthScreen, goalWidth):
     
     #make the CPU attack more
     if soccer.x >= widthScreen//2 and soccer.BDX > 0:
-        cpu.x += 2
+        cpu.x += (2 + cpu.extraSpeed)
 
     #if the  ball is close to the CPU make it move forward to hit the ball
     if abs(soccer.x - (cpu.x + cpu.width)) <= 10 and soccer.BDX > 0:
-        cpu.x += 5
+        cpu.x += (5 + cpu.extraSpeed)
     
     #if the ball is right above the CPU make it jump
     if (soccer.x - (cpu.x + cpu.width) < 0 and soccer.x - (cpu.x + cpu.width) > -81) and abs(cpu.y - (soccer.y + soccer.height)) < 10:
@@ -907,40 +910,40 @@ def mediumAI(cpu, soccer, widthScreen, goalWidth):
 
     elif abs(cpu.x + cpu.width - soccer.x) <= 20 and abs(soccer.y + soccer.height - cpu.y) <= 25 and soccer.BDY > 0:
         cpu.jump(soccer)
-        cpu.x += 5
+        cpu.x += (5 + cpu.extraSpeed)
 
     #check if the other player hits the ball and go backwards if so
     if soccer.BDX >= 5*math.cos(50) and soccer.x >= widthScreen//2 + 100:
-        cpu.x -= 5
+        cpu.x -= (5 + cpu.extraSpeed)
     
     #this makes the AI move backwards if the soccer ball is going bakcwards
     elif abs(cpu.x + cpu.width - soccer.x) <= 65 and abs(cpu.x + cpu.width - soccer.x) >= 35 and  soccer.BDX < 0 and soccer.BDY > 0 :
-        cpu.x -= 6      
+        cpu.x -= (6 + cpu.extraSpeed)    
     
     #if the player hits the ball move backwards
     elif player.checkPlayerHittingBall(soccer, heightScreen, widthScreen):
-        cpu.x -= 6
+        cpu.x -= (6 + cpu.extraSpeed)
     
     #check if the ball is closer to the other player and if it is retrocede in case it hits the ball
     elif abs(soccer.x + soccer.width - player.x) <= 5 and abs(soccer.x - cpu.x) > 5:
-        cpu.x -= 6
+        cpu.x -= (6 + cpu.extraSpeed) 
 
     #if the soccer is not moving go towards it and hit it
     elif soccer.BDX == 0:
         if cpu.x + cpu.width < soccer.x:
-            cpu.x += 6
+            cpu.x += (6 + cpu.extraSpeed)
     
     elif cpu.x + cpu.width < soccer.x - 20:
-        cpu.x += 3.5
+        cpu.x += (3.5 + cpu.extraSpeed)
     
     #check if the cpu needs to jump to hit the ball
     if ((soccer.y  + soccer.height < cpu.y) and (soccer.x - (cpu.x + cpu.width) < 5) and (soccer.x > cpu.x + cpu.width) or (cpu.jumping)):
         if cpu.x + cpu.width < soccer.x:
-            cpu.x += 2
+            cpu.x += (2 + cpu.extraSpeed)
 
         if cpu.jumpHeight + cpu.y <= soccer.y + soccer.height or cpu.jumping and soccer.y + soccer.width <= cpu.y:
             cpu.jump(soccer)
-            cpu.x += 2
+            cpu.x += (2 + cpu.extraSpeed)
 
 #this function uses Pythagoran Theorem to calculate the hypotenuse of a triangle
 def hypotenuse(x, y):
@@ -955,36 +958,75 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
     global jumpImgShowing
     global yJumpImg
     global timeFrozen
+    global time
 
     singlePlayerScreen = True
 
     while singlePlayerScreen:
+        time += 1
 
         clock.tick(1000)
+
+        
+        #apply the jumpImage powerup if it is showing
+        if jumpImgShowing and yJumpImg < heightScreen - 30:
+            yJumpImg += 5
+
+        #check if the image has hit ground and check if any player gets the jump icon
+        elif (((player.x + player.width > xJumpImg + 15 and player.x < xJumpImg) or
+        (player.x < xJumpImg - 15 and player.x + player.width > xJumpImg + 30)) and player.y + player.height >= 560 and
+        jumpImgShowing and player.jumpHeightSecure != 9.5 and not player.jumping):
+            yJumpImg = 30
+            jumpImgShowing = False
+            player.jumpHeight += 0.5
+            player.jumpHeightSecure += 0.5
+
+        #check for the other player
+        elif(((guestPlayer.x + guestPlayer.width > xJumpImg + 15 and guestPlayer.x < xJumpImg) or
+        (guestPlayer.x < xJumpImg - 15 and guestPlayer.x + guestPlayer.width > xJumpImg + 30)) and guestPlayer.y + player.height >= 560 and
+        jumpImgShowing and guestPlayer.jumpHeightSecure != 9.5 and not guestPlayer.jumping):
+            yJumpImg = 30
+            jumpImgShowing = False
+            guestPlayer.jumpHeight += 0.5
+            guestPlayer.jumpHeightSecure += 0.5
+
+
+        #the following code is applied to the freeze power
+        #this power can only be achieved once since it is supreme and will pretty much allow you a free goal
+        #if a player is winning by 3 goals the other player is frozen for a decent amount of seconds
+        possibleTimeFrozen = applyPowers(player, guestPlayer, time, superJumpImg, screen, xJumpImg, yJumpImg)
+        if isinstance(possibleTimeFrozen, int):
+            timeFrozen = possibleTimeFrozen
+        
+        if isinstance(timeFrozen, int) and (time - timeFrozen) == 150:
+            player.frozen = False
+            guestPlayer.frozen = False
+            beenFreezed = True
 
         applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
 
         checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
 
-
         keyPressed = pygame.key.get_pressed()
         #this makes sure the player can move continously so that we do not have to press the key multiple times
-        if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
-            player.x += 10     
-            player.rectangleX = player.x
-    
-    
-        if keyPressed[pygame.K_LEFT] and player.x >= goalWidth - player.width + 20:         #the purpose of the and is to ensure the player does not go outside of the left bound
-            player.x -= 10                       #0.15
-            player.rectangleX = player.x
+        if not player.frozen:
+
+            if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
+                player.x += 10     
+                player.rectangleX = player.x
         
-        if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
-            player.jumping = True
-            applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
         
-        if player.jumping:
-            player.jump(soccer)
-            #make sure we check for all our collisions and goals, etc
+            if keyPressed[pygame.K_LEFT] and player.x >= goalWidth - player.width + 20:         #the purpose of the and is to ensure the player does not go outside of the left bound
+                player.x -= 10                       #0.15
+                player.rectangleX = player.x
+            
+            if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
+                player.jumping = True
+                applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
+            
+            if player.jumping:
+                player.jump(soccer)
+                #make sure we check for all our collisions and goals, etc
 
         #make sure the user can exit out of the game by pressing the top left exit button
         for event in pygame.event.get():
@@ -1017,9 +1059,12 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         screen.blit(goalLeftImg, (0, heightScreen - goalHeight))
         screen.blit(goalRightImg, (widthScreen - goalWidth, heightScreen - goalHeight))
         createGoalCount(player, guestPlayer, screen, widthScreen)
-        
+    
         if jumpImgShowing:
             screen.blit(superJumpImg, (xJumpImg, yJumpImg))
+    
+        if speedImgShowing:
+            screen.blit(runFastImg, (speedX, speedY))
     
         pygame.display.flip()
 
@@ -1069,24 +1114,25 @@ def applyExtraSpeed(player, guestPlayer, time, screen):
     global heightScreen
     global speedX
     global speedY
+    #24, 40
     if time % 300 == 0 and time != 0 and not speedImgShowing:
         screen.blit(runFastImg,(speedX, speedY))
         speedImgShowing = True
 
-    elif speedImgShowing and speedY < heightScreen - 30:
+    elif speedImgShowing and speedY < heightScreen - 40:
         speedY += 5
 
     #check if the image has hit ground and check if any player gets the jump icon
-    elif (((player.x + player.width > speedX + 10 and player.x < speedX) or 
-    (player.x < speedX - 10 and player.x - player.width > speedX + 30)) and player.y + player.height >= 560
+    elif (((player.x + player.width > speedX + 12 and player.x < speedX) or 
+    (player.x < speedX - 12 and player.x - player.width > speedX + 24)) and player.y + player.height >= 560
     and speedImgShowing and player.extraSpeed != 3 and not player.jumping):
         player.extraSpeed += 0.5
         speedY = 30
         speedImgShowing = False
 
     #check for the other player
-    elif (((guestPlayer.x + guestPlayer.width > speedX + 10 and guestPlayer.x < speedX) or 
-    (guestPlayer.x < speedX - 10 and guestPlayer.x - guestPlayer.width > speedX + 30)) and guestPlayer.y + guestPlayer.height >= 560
+    elif (((guestPlayer.x + guestPlayer.width > speedX + 12 and guestPlayer.x < speedX) or 
+    (guestPlayer.x < speedX - 12 and guestPlayer.x - guestPlayer.width > speedX + 24)) and guestPlayer.y + guestPlayer.height >= 560
     and speedImgShowing and guestPlayer.extraSpeed != 3 and not guestPlayer.jumping):
         guestPlayer.extraSpeed += 0.5
         speedY = 30
@@ -1096,7 +1142,7 @@ def applyExtraSpeed(player, guestPlayer, time, screen):
 #applies super jump to the player who is hitting the ball more often, aka being more engaging
 def applySuperJump(player, guestPlayer, time, superJumpImg, screen, x, y):
     global jumpImgShowing
-
+    print("Hello")
     if time % 500 == 0 and not jumpImgShowing and time != 0 and not jumpImgShowing:
         screen.blit(superJumpImg, (x,y))
         jumpImgShowing = True
@@ -1170,8 +1216,8 @@ while runPygame:
         yJumpImg += 5
 
     #check if the image has hit ground and check if any player gets the jump icon
-    elif (((player.x + player.width > xJumpImg + 10 and player.x < xJumpImg) or
-    (player.x < xJumpImg - 10 and player.x + player.width > xJumpImg + 30)) and player.y + player.height >= 560 and
+    elif (((player.x + player.width > xJumpImg + 15 and player.x < xJumpImg) or
+    (player.x < xJumpImg - 15 and player.x + player.width > xJumpImg + 30)) and player.y + player.height >= 560 and
     jumpImgShowing and player.jumpHeightSecure != 9.5 and not player.jumping):
         yJumpImg = 30
         jumpImgShowing = False
@@ -1179,8 +1225,8 @@ while runPygame:
         player.jumpHeightSecure += 0.5
 
     #check for the other player
-    elif(((guestPlayer.x + guestPlayer.width > xJumpImg + 10 and guestPlayer.x < xJumpImg) or
-    (guestPlayer.x < xJumpImg - 10 and guestPlayer.x + guestPlayer.width > xJumpImg + 30)) and guestPlayer.y + player.height >= 560 and
+    elif(((guestPlayer.x + guestPlayer.width > xJumpImg + 15 and guestPlayer.x < xJumpImg) or
+    (guestPlayer.x < xJumpImg - 15 and guestPlayer.x + guestPlayer.width > xJumpImg + 30)) and guestPlayer.y + player.height >= 560 and
     jumpImgShowing and guestPlayer.jumpHeightSecure != 9.5 and not guestPlayer.jumping):
         yJumpImg = 30
         jumpImgShowing = False
@@ -1271,7 +1317,7 @@ while runPygame:
     pygame.draw.rect(screen, black, (guestPlayer.x + 6, guestPlayer.y + 50, guestPlayer.width - 23, guestPlayer.height - 47), 5)
     pygame.draw.ellipse(screen, green, (guestPlayer.x - 5, guestPlayer.y - 5, guestPlayer.width + 2 , guestPlayer.height - 35), 4)
     ######################################
-    pygame.draw.polygon(screen, red,((widthScreen,heightScreen), (widthScreen - goalWidth,heightScreen), (widthScreen - goalWidth, heightScreen - goalHeight + 30)), 10)
+    # pygame.draw.polygon(screen, red,((widthScreen,heightScreen), (widthScreen - goalWidth,heightScreen), (widthScreen - goalWidth, heightScreen - goalHeight + 30)), 10)
     ##############################################
     #The following lines update the current position of the objects
     ##############################################
