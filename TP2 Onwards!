@@ -732,7 +732,7 @@ def createButtonAI():
 ##############################################
 #This function displays the first screen######
 ##############################################
-def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg):
+def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer):
     introScreen = pygame.display.set_mode((widthScreen, heightScreen))
     firstDisplay = True
     introBackgroundImg = pygame.image.load("Intro Background.jpg")
@@ -755,7 +755,7 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
         if startPlayingAIButton.pressed:
             mixer.music.pause()
             firstDisplay = False
-            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth)
+            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer)
 
         if startPlaying2PlayerButton.pressed:
             mixer.music.pause()
@@ -969,7 +969,7 @@ def radian(angle):
     return angle * (math.pi/180)
     
 #Create the screen that will be popped if we select "Single Player"
-def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth):
+def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer):
     global jumpImgShowing
     global yJumpImg
     global timeFrozen
@@ -982,29 +982,46 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
 
         clock.tick(1000)
 
-        
-        #apply the jumpImage powerup if it is showing
-        if jumpImgShowing and yJumpImg < heightScreen - 30:
-            yJumpImg += 5
-
         #check if the image has hit ground and check if any player gets the jump icon
-        elif (((player.x + player.width > xJumpImg + 15 and player.x < xJumpImg) or
-        (player.x < xJumpImg - 15 and player.x + player.width > xJumpImg + 30)) and player.y + player.height >= 560 and
-        jumpImgShowing and player.jumpHeightSecure != 8.75 and not player.jumping):
+        if (((player.y >= yJumpImg and player.y < yJumpImg + jumpImgHeight) or (player.y + player.height >= yJumpImg and player.y + player.height < yJumpImg + jumpImgHeight) or
+        (player.y + player.height >= yJumpImg and player.y <= yJumpImg))
+        and ((player.x + player.width > xJumpImg + 15 and player.x < xJumpImg) or
+        (player.x < xJumpImg - 15 and player.x + player.width > xJumpImg + 30)) and
+        jumpImgShowing and player.jumpHeightSecure != 8.5) and not incrementJumpPlayer:
+            incrementJumpPlayer = True
             yJumpImg = 30
             jumpImgShowing = False
-            player.jumpHeight += 0.25
-            player.jumpHeightSecure += 0.25
 
         #check for the other player
-        elif(((guestPlayer.x + guestPlayer.width > xJumpImg + 15 and guestPlayer.x < xJumpImg) or
-        (guestPlayer.x < xJumpImg - 15 and guestPlayer.x + guestPlayer.width > xJumpImg + 30)) and guestPlayer.y + player.height >= 560 and
-        jumpImgShowing and guestPlayer.jumpHeightSecure != 8.75 and not guestPlayer.jumping):
+        elif (((guestPlayer.y >= yJumpImg and guestPlayer.y < yJumpImg + jumpImgHeight) or (guestPlayer.y + guestPlayer.height >= yJumpImg and guestPlayer.y + guestPlayer.height < yJumpImg + jumpImgHeight) or
+        (guestPlayer.y + guestPlayer.height >= yJumpImg and guestPlayer.y <= yJumpImg))
+        and ((guestPlayer.x + guestPlayer.width > xJumpImg + 15 and guestPlayer.x < xJumpImg) or
+        (guestPlayer.x < xJumpImg - 15 and guestPlayer.x + guestPlayer.width > xJumpImg + 30)) and
+        jumpImgShowing and player.jumpHeightSecure != 8.5) and not incrementJumpGuestPlayer:
+            incrementJumpGuestPlayer = True
             yJumpImg = 30
             jumpImgShowing = False
-            guestPlayer.jumpHeight += 0.25
-            guestPlayer.jumpHeightSecure += 0.25
 
+        #apply the jumpImage powerup if it is showing
+        elif jumpImgShowing and yJumpImg < heightScreen - 30:
+            yJumpImg += 5
+
+        elif yJumpImg == heightScreen - 30:
+            jumpImgShowing = False
+            yJumpImg = 30
+            xJumpImg = random.randint(widthScreen//2 - 300, widthScreen//2 + 300)
+
+        #now add the extra jumpheight if a player got it
+
+        if incrementJumpPlayer and not player.jumping:
+            incrementJumpPlayer = False
+            player.jumpHeight += 0.5
+            player.jumpHeightSecure += 0.5
+
+        elif incrementJumpGuestPlayer and not guestPlayer.jumping:
+            incrementJumpGuestPlayer = False
+            guestPlayer.jumpHeight += 0.5
+            guestPlayer.jumpHeightSecure += 0.5
 
         #the following code is applied to the freeze power
         #this power can only be achieved once since it is supreme and will pretty much allow you a free goal
@@ -1243,9 +1260,8 @@ firstRun = True
 
 
 while runPygame:
+
     time += 1
-    jumpImgWidth
-    
 
     #check if the image has hit ground and check if any player gets the jump icon
     if (((player.y >= yJumpImg and player.y < yJumpImg + jumpImgHeight) or (player.y + player.height >= yJumpImg and player.y + player.height < yJumpImg + jumpImgHeight) or
@@ -1256,8 +1272,6 @@ while runPygame:
         incrementJumpPlayer = True
         yJumpImg = 30
         jumpImgShowing = False
-        # player.jumpHeight += 0.5
-        # player.jumpHeightSecure += 0.5
 
     #check for the other player
     elif (((guestPlayer.y >= yJumpImg and guestPlayer.y < yJumpImg + jumpImgHeight) or (guestPlayer.y + guestPlayer.height >= yJumpImg and guestPlayer.y + guestPlayer.height < yJumpImg + jumpImgHeight) or
@@ -1268,8 +1282,6 @@ while runPygame:
         incrementJumpGuestPlayer = True
         yJumpImg = 30
         jumpImgShowing = False
-        # guestPlayer.jumpHeight += 0.5
-        # guestPlayer.jumpHeightSecure += 0.5
 
     #apply the jumpImage powerup if it is showing
     elif jumpImgShowing and yJumpImg < heightScreen - 30:
@@ -1310,7 +1322,7 @@ while runPygame:
 
     # initial screen
     if not startPlaying2PlayerButton.pressed and not startPlayingAIButton.pressed:
-        firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg)
+        firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
 
 
     clock.tick(10000)
