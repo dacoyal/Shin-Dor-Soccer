@@ -641,6 +641,10 @@ speedX, speedY = (random.randint(widthScreen//2 - 300, widthScreen//2 + 300), 40
 goalPost = 25
 jumpImgWidth = 30
 jumpImgHeight = 41
+runFastWidth = 24
+runFastHeight = 40
+incrementJumpPlayer = False
+incrementJumpGuestPlayer = False
 #connect to the server
 # n = Network()
 # startPos = read_pos(n.getPos())
@@ -1125,35 +1129,44 @@ def applyExtraSpeed(player, guestPlayer, time, screen):
     global heightScreen
     global speedX
     global speedY
-    #24, 40
-    if time % 1000 == 0 and time != 0 and not speedImgShowing:
+
+    if time % 700 == 0 and time != 0 and not speedImgShowing and not (guestPlayer.extraSpeed == 1.5 and player.extraSpeed == 1.5):
         screen.blit(runFastImg,(speedX, speedY))
         speedImgShowing = True
 
-    elif speedImgShowing and speedY < heightScreen - 40:
-        speedY += 5
-
     #check if the image has hit ground and check if any player gets the jump icon
-    elif (((player.x + player.width > speedX + 12 and player.x < speedX) or 
-    (player.x < speedX - 12 and player.x - player.width > speedX + 24)) and player.y + player.height >= 560
-    and speedImgShowing and player.extraSpeed != 1.5 and not player.jumping):
+    elif (((player.y >= speedY and player.y < speedY + runFastHeight) or (player.y + player.height >= speedY and player.y + player.height < speedY + runFastHeight) or
+    (player.y + player.height >= speedY and player.y <= runFastHeight))
+    and ((player.x + player.width > speedX + 12 and player.x < speedX) or
+    (player.x < speedX - 12 and player.x + player.width > speedX + 24)) and
+    speedImgShowing and player.extraSpeed != 1.5):
         player.extraSpeed += 0.5
         speedY = 30
         speedImgShowing = False
 
     #check for the other player
-    elif (((guestPlayer.x + guestPlayer.width > speedX + 12 and guestPlayer.x < speedX) or 
-    (guestPlayer.x < speedX - 12 and guestPlayer.x - guestPlayer.width > speedX + 24)) and guestPlayer.y + guestPlayer.height >= 560
-    and speedImgShowing and guestPlayer.extraSpeed != 1.5 and not guestPlayer.jumping):
+    elif (((guestPlayer.y >= speedY and guestPlayer.y < speedY + runFastHeight) or (guestPlayer.y + guestPlayer.height >= speedY and guestPlayer.y + guestPlayer.height < speedY + runFastHeight) or
+    (guestPlayer.y + guestPlayer.height >= speedY and guestPlayer.y <= runFastHeight))
+    and ((guestPlayer.x + guestPlayer.width > speedX + 12 and guestPlayer.x < speedX) or
+    (guestPlayer.x < speedX - 12 and guestPlayer.x + guestPlayer.width > speedX + 24)) and
+    speedImgShowing and guestPlayer.extraSpeed != 1.5):
         guestPlayer.extraSpeed += 0.5
         speedY = 30
         speedImgShowing = False
+
+    elif speedImgShowing and speedY < heightScreen - 40:
+        speedY += 5
+
+    elif speedY == heightScreen - 40:
+        speedY = 30
+        speedImgShowing = False
+        speedX = random.randint(widthScreen//2 - 300, widthScreen//2 + 300)
 
 
 #applies super jump to the player who is hitting the ball more often, aka being more engaging
 def applySuperJump(player, guestPlayer, time, superJumpImg, screen, x, y):
     global jumpImgShowing
-    if time % 800 == 0 and not jumpImgShowing and time != 0 and not jumpImgShowing:
+    if time % 500 == 0 and not jumpImgShowing and time != 0 and not jumpImgShowing and not player.jumpHeightSecure == 8.5 and not guestPlayer.jumpHeightSecure == 8.5:
         screen.blit(superJumpImg, (x,y))
         jumpImgShowing = True
 
@@ -1233,28 +1246,49 @@ while runPygame:
     time += 1
     jumpImgWidth
     
-    #apply the jumpImage powerup if it is showing
-    if jumpImgShowing and yJumpImg < heightScreen - 30:
-        yJumpImg += 5
-        print(player.y >= yJumpImg and player.y < yJumpImg + jumpImgHeight, "\n")
+
     #check if the image has hit ground and check if any player gets the jump icon
-    if ((((player.y >= yJumpImg and player.y < yJumpImg + jumpImgHeight) or (player.y + player.height >= yJumpImg and player.y + player.height < yJumpImg + jumpImgHeight) or
-    player.y + player.height >= yJumpImg and player.y <= yJumpImg))
+    if (((player.y >= yJumpImg and player.y < yJumpImg + jumpImgHeight) or (player.y + player.height >= yJumpImg and player.y + player.height < yJumpImg + jumpImgHeight) or
+    (player.y + player.height >= yJumpImg and player.y <= yJumpImg))
     and ((player.x + player.width > xJumpImg + 15 and player.x < xJumpImg) or
     (player.x < xJumpImg - 15 and player.x + player.width > xJumpImg + 30)) and
-    jumpImgShowing and player.jumpHeightSecure != 8.5 and not player.jumping):
-        print("Hello \n")
+    jumpImgShowing and player.jumpHeightSecure != 8.5) and not incrementJumpPlayer:
+        incrementJumpPlayer = True
         yJumpImg = 30
         jumpImgShowing = False
+        # player.jumpHeight += 0.5
+        # player.jumpHeightSecure += 0.5
+
+    #check for the other player
+    elif (((guestPlayer.y >= yJumpImg and guestPlayer.y < yJumpImg + jumpImgHeight) or (guestPlayer.y + guestPlayer.height >= yJumpImg and guestPlayer.y + guestPlayer.height < yJumpImg + jumpImgHeight) or
+    (guestPlayer.y + guestPlayer.height >= yJumpImg and guestPlayer.y <= yJumpImg))
+    and ((guestPlayer.x + guestPlayer.width > xJumpImg + 15 and guestPlayer.x < xJumpImg) or
+    (guestPlayer.x < xJumpImg - 15 and guestPlayer.x + guestPlayer.width > xJumpImg + 30)) and
+    jumpImgShowing and player.jumpHeightSecure != 8.5) and not incrementJumpGuestPlayer:
+        incrementJumpGuestPlayer = True
+        yJumpImg = 30
+        jumpImgShowing = False
+        # guestPlayer.jumpHeight += 0.5
+        # guestPlayer.jumpHeightSecure += 0.5
+
+    #apply the jumpImage powerup if it is showing
+    elif jumpImgShowing and yJumpImg < heightScreen - 30:
+        yJumpImg += 5
+
+    elif yJumpImg == heightScreen - 30:
+        jumpImgShowing = False
+        yJumpImg = 30
+        xJumpImg = random.randint(widthScreen//2 - 300, widthScreen//2 + 300)
+
+    #now add the extra jumpheight if a player got it
+
+    if incrementJumpPlayer and not player.jumping:
+        incrementJumpPlayer = False
         player.jumpHeight += 0.5
         player.jumpHeightSecure += 0.5
 
-    #check for the other player
-    if(((guestPlayer.x + guestPlayer.width > xJumpImg + 15 and guestPlayer.x < xJumpImg) or
-    (guestPlayer.x < xJumpImg - 15 and guestPlayer.x + guestPlayer.width > xJumpImg + 30)) and guestPlayer.y + player.height >= 560 and
-    jumpImgShowing and guestPlayer.jumpHeightSecure != 8.5 and not guestPlayer.jumping):
-        yJumpImg = 30
-        jumpImgShowing = False
+    elif incrementJumpGuestPlayer and not guestPlayer.jumping:
+        incrementJumpGuestPlayer = False
         guestPlayer.jumpHeight += 0.5
         guestPlayer.jumpHeightSecure += 0.5
 
