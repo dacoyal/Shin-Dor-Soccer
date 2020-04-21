@@ -79,6 +79,7 @@ class Button(object):
         self.saveColor1 = color1
         self.saveColorButton = colorButton
 
+    #displayButton creates the button and displays it
     def displayButton(self, screen):
         textButton = self.font.render(self.text, True, self.color1)
         buttonRectangle = textButton.get_rect()
@@ -86,6 +87,7 @@ class Button(object):
         pygame.draw.rect(screen, self.colorButton, (self.x, self.y, self.width, self.height))
         screen.blit(textButton, buttonRectangle)
 
+    #overButton changes the color of the button if we put our mouse over it, to improve the user experience
     def overButton(self, mouseCoordX, mouseCoordY):
         black = (0, 0, 0)
         yellow = (255, 255, 0)
@@ -98,7 +100,7 @@ class Button(object):
             self.color1 = self.saveColor1
             self.colorButton = self.saveColorButton
 
-
+    #pressedButton checks to see if the mouseButton was pressed and if it is pressed it changes the color of the button back to its original color
     def pressedButton(self, mouseCoordX, mouseCoordY):
         #now check that the mouseCoordX and mouseCoordY are in the range of the rectangle we drew
         if ((mouseCoordX >= self.x and mouseCoordX <= self.x + self.width) and 
@@ -644,8 +646,8 @@ goalCount = 0
 black = (0, 0, 0)
 blue = (102, 178, 255)
 font = pygame.font.Font('freesansbold.ttf', 32)
-#textGoal = font.render('GOOOOOOOOOOOOOAAAAAL', True, green, blue)
-#textGoalRectangle = textGoal.get_rect()
+textGoal = font.render('GOOOOOOOOOOOOOAAAAAL', True, black, blue)
+textGoalRectangle = textGoal.get_rect()
 pressedButton = False
 extraSpeed = 0
 collidedTimes = 0
@@ -768,9 +770,71 @@ def createInstructionsButton():
     return instructionsButton
 
 #create the instructions screen
-def createInstructionsScreen():
-    global heightScreen
-    global widthScreen
+def createInstructionsScreen(heightScreen, widthScreen):
+    global superJumpImg
+    global runFastImg
+
+    black = (0, 0, 0)
+    white = (255, 255, 255)
+    green = (0, 255, 0)
+    yellow = (255, 255, 0)
+    blue = (0,191,255)
+    red = (255, 0, 0)
+    coral = (255,127,80)
+
+    instructions = "Score 7 goals to win!" 
+    instructionsText = font.render(instructions, True, white)
+    instructionsRect = instructionsText.get_rect()
+    instructionsRect.center = (200, 50)
+
+    powers = '3 Powers Available'
+    powersText = font.render(powers, True, red)
+    powersRect = instructionsText.get_rect()
+    powersRect.center = (widthScreen / 2, 80)
+
+    extraSpeed = 'ExtraSpeed'
+    extraSpeedText = font.render(extraSpeed, True, yellow)
+    extraSpeedRect = extraSpeedText.get_rect()
+    extraSpeedRect.center = (widthScreen / 2 - 400, 140)
+
+    frozen = 'Frozen'
+    frozenText = font.render(frozen, True, blue)
+    frozenRect = frozenText.get_rect()
+    frozenRect.center = (widthScreen / 2 - 15, 140)
+
+    superJump = 'SuperJump'
+    superJumpText = font.render(superJump, True, coral)
+    superJumpRect = frozenText.get_rect()
+    superJumpRect.center = (widthScreen / 2 + 360, 140)
+
+    superJumpD = 'Increases jump by 0.25'
+    superJumpDText = font.render(superJumpD, True, white)
+    superJumpDRect = superJumpDText.get_rect()
+    superJumpDRect.center = (widthScreen / 2 + 360, 270)
+
+    instructionsScreen = pygame.display.set_mode((widthScreen, heightScreen))
+    instructionsScreenBackgroundImg = pygame.image.load("Instructions.jpg")
+    instructionsDisplay = True
+
+    while instructionsDisplay:
+
+        #to quit out of the screen
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                instructionsDisplay = False
+                pygame.quit() 
+                os._exit(0)
+
+        instructionsScreen.blit((instructionsScreenBackgroundImg), (0,0))
+        screen.blit(instructionsText, instructionsRect)
+        screen.blit(powersText, powersRect)
+        screen.blit(extraSpeedText, extraSpeedRect)
+        screen.blit(frozenText, frozenRect)
+        screen.blit(superJumpText, superJumpRect)
+        screen.blit(superJumpImg, (widthScreen / 2 + 387, 180))
+        screen.blit(runFastImg, ((widthScreen / 2 - 425, 170)))
+        screen.blit(superJumpDText, superJumpDRect)
+        pygame.display.flip()
 
 
 ##############################################
@@ -779,7 +843,7 @@ def createInstructionsScreen():
 def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions):
     introScreen = pygame.display.set_mode((widthScreen, heightScreen))
     firstDisplay = True
-    introBackgroundImg = pygame.image.load("Intro Background.jpg")
+    introBackgroundImg = pygame.image.load("BrickWall.jpg")
     textIntro = font.render('Welcome to Shin-Dor Soccer', True, black, blue)
     textIntroRectangle = textIntro.get_rect()
     textIntroRectangle.center = (widthScreen//2, heightScreen//2)
@@ -815,8 +879,7 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
         if startInstructions.pressed:
             mixer.music.pause()
             firstDisplay = False
-            creatInstructionsScreen()
-
+            createInstructionsScreen(heightScreen, widthScreen)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -827,7 +890,6 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
         #display of intro screen########
         ################################
 
-        introScreen = pygame.display.set_mode((widthScreen, heightScreen))
         introScreen.blit((introBackgroundImg), (0,0))
         introScreen.blit(shinChanIntroImg, (17, 125))
         introScreen.blit(doraemonIntroImg, (725, 100))
