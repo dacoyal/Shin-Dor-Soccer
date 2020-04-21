@@ -815,7 +815,7 @@ def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraem
     extraSpeedRect = extraSpeedText.get_rect()
     extraSpeedRect.center = (widthScreen // 2 - 400, 140)
 
-    frozen = 'Frozen'
+    frozen = 'Freeze opponent'
     frozenText = font.render(frozen, True, blue)
     frozenRect = frozenText.get_rect()
     frozenRect.center = (widthScreen // 2 - 15, 140)
@@ -823,7 +823,7 @@ def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraem
     superJump = 'SuperJump'
     superJumpText = font.render(superJump, True, coral)
     superJumpRect = frozenText.get_rect()
-    superJumpRect.center = (widthScreen // 2 + 360, 140)
+    superJumpRect.center = (widthScreen // 2 + 440, 140)
 
     superJumpD = 'Increases jump'
     superJumpDText = font.render(superJumpD, True, white)
@@ -867,10 +867,6 @@ def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraem
     backButton = createBacktoIntroButton()
 
     while instructionsDisplay:
-        
-        instructionsScreen.blit((instructionsScreenBackgroundImg), (0,0))
-        backButton.displayButton(screen)
-
         #to quit out of the screen
         for event in pygame.event.get():
             mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
@@ -887,11 +883,12 @@ def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraem
         #########################################################################################
         ####################### BUGG HERE TO FIX ################################################
         #########################################################################################
-        if backButton.pressedButton:
-            pass
-        #     instructionsDisplay = False
-        #     firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
+        if backButton.pressed:
+            instructionsDisplay = False
+            firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
 
+
+        instructionsScreen.blit((instructionsScreenBackgroundImg), (0,0))
         screen.blit(instructionsText, instructionsRect)
         screen.blit(powersText, powersRect)
         screen.blit(extraSpeedText, extraSpeedRect)
@@ -906,6 +903,7 @@ def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraem
         screen.blit(frozenText3, frozenText3Rect)
         screen.blit(speed1Text, speed1TextRect)
         screen.blit(speed2Text, speed2TextRect)
+        backButton.displayButton(screen)
         pygame.display.flip()
 
 
@@ -921,8 +919,10 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
     textIntroRectangle.center = (widthScreen//2, heightScreen//2)
     mixer.music.load("Intro Audio.mp3")
     mixer.music.play(-1)
+    startInstructions.pressed = False
     #Initial Screen Loop
     while firstDisplay:
+
         #check if the user presses the button
         for event in pygame.event.get():
 
@@ -1383,7 +1383,6 @@ def applySuperJump(player, guestPlayer, time, superJumpImg, screen, x, y):
     if time % 200 == 0 and not jumpImgShowing and time != 0 and not player.jumpHeightSecure == 9 and not guestPlayer.jumpHeightSecure == 8.5:
         screen.blit(superJumpImg, (x,y))
         jumpImgShowing = True
-        print("Hello")
 
 
 #if someone is losing by 3 they get frozen by a certain amount of time
@@ -1455,8 +1454,7 @@ def make_pos(tup):
 
 runPygame = True
 firstRun = True
-
-
+out = None
 while runPygame:
 
     time += 1
@@ -1528,8 +1526,13 @@ while runPygame:
 
     # initial screen
     if not startPlaying2PlayerButton.pressed and not startPlayingAIButton.pressed:
-        firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
-
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                runPygame = False
+                pygame.quit()
+                os._exit(0)
+            else:
+                firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
 
     clock.tick(10000)
 
