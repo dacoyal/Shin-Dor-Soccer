@@ -883,14 +883,11 @@ def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraem
                 pygame.quit() 
                 os._exit(0)
 
-        #########################################################################################
-        ####################### BUGG HERE TO FIX ################################################
-        #########################################################################################
+
         if backButton.pressed:
             instructionsDisplay = False
-            firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
-
-
+            firstScreenAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
+            
         instructionsScreen.blit((instructionsScreenBackgroundImg), (0,0))
         screen.blit(instructionsText, instructionsRect)
         screen.blit(powersText, powersRect)
@@ -914,6 +911,7 @@ def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraem
 #This function displays the first screen######
 ##############################################
 def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions):
+
     introScreen = pygame.display.set_mode((widthScreen, heightScreen))
     firstDisplay = True
     introBackgroundImg = pygame.image.load("BrickWall.jpg")
@@ -922,6 +920,70 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
     textIntroRectangle.center = (widthScreen//2, heightScreen//2)
     mixer.music.load("Intro Audio.mp3")
     mixer.music.play(-1)
+    startInstructions.pressed = False
+    #Initial Screen Loop
+    while firstDisplay:
+
+        #check if the user presses the button
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                firstDisplay = False
+                pygame.quit() 
+                os._exit(0)
+
+            mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+
+            startPlaying2PlayerButton.overButton(mouseCoordX, mouseCoordY)
+            startPlayingAIButton.overButton(mouseCoordX, mouseCoordY)
+            startInstructions.overButton(mouseCoordX, mouseCoordY)
+
+            if(event.type == pygame.MOUSEBUTTONDOWN):
+
+                startPlaying2PlayerButton.pressedButton(mouseCoordX, mouseCoordY)
+                startPlayingAIButton.pressedButton(mouseCoordX, mouseCoordY)
+                startInstructions.pressedButton(mouseCoordX, mouseCoordY)
+
+        if startPlayingAIButton.pressed:
+            mixer.music.pause()
+            firstDisplay = False
+            startPlayingAIButton.pressed = False
+            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer)
+
+        if startPlaying2PlayerButton.pressed:
+            mixer.music.pause()
+            firstDisplay = False
+            startPlaying2PlayerButton.pressed = False
+            twoPlayerScreen()
+            #if the button is pressed we are done with the first display
+
+        if startInstructions.pressed:
+            firstDisplay = False
+            createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
+
+        ################################
+        #display of intro screen########
+        ################################
+
+        introScreen.blit((introBackgroundImg), (0,0))
+        introScreen.blit(shinChanIntroImg, (17, 125))
+        introScreen.blit(doraemonIntroImg, (725, 100))
+        introScreen.blit(soccerIntroImg, (450, 20))
+        introScreen.blit(textIntro, textIntroRectangle)
+        startPlaying2PlayerButton.displayButton(introScreen)
+        startPlayingAIButton.displayButton(introScreen)
+        startInstructions.displayButton(introScreen)
+        pygame.display.flip()
+
+#we create this screen so that the music will not restart playing after hitting the go back to main screen after instructions
+def firstScreenAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions):
+
+    introScreen = pygame.display.set_mode((widthScreen, heightScreen))
+    firstDisplay = True
+    introBackgroundImg = pygame.image.load("BrickWall.jpg")
+    textIntro = font.render('Welcome to Shin-Dor Soccer', True, black, blue)
+    textIntroRectangle = textIntro.get_rect()
+    textIntroRectangle.center = (widthScreen//2, heightScreen//2)
     startInstructions.pressed = False
     #Initial Screen Loop
     while firstDisplay:
@@ -1643,5 +1705,4 @@ startInstructions = createInstructionsButton()
 while runPygame:
     
     # initial screen
-
     firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
