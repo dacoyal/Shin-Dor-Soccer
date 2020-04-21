@@ -206,7 +206,9 @@ class Ball(object):
             player.x = widthScreen - playerWidth - goalWidth - 5
             guestPlayer.x = goalWidth + 5
             goal_Sound = mixer.Sound("Goal Audio.mp3")
-            goal_Sound.play()
+            
+            if player.goalCount != 7:
+                goal_Sound.play()
 
     
     def checkForGuestPlayerGoal(self, guestPlayer, widthScreen, heightScreen, goalWidth, goalHeight, player):
@@ -224,7 +226,8 @@ class Ball(object):
             guestPlayer.x = goalWidth + 5
             player.x = widthScreen - playerWidth - goalWidth - 5
             goal_Sound = mixer.Sound("Goal Audio.mp3")
-            goal_Sound.play()
+            if guestPlayer.goalCount != 7:
+                goal_Sound.play()
     
     
     def checkForBallCollisionsAndGravity(self, heightScreen, widthScreen, epsilon):
@@ -946,11 +949,13 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
         if startPlayingAIButton.pressed:
             mixer.music.pause()
             firstDisplay = False
+            startPlayingAIButton.pressed = False
             createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer)
 
         if startPlaying2PlayerButton.pressed:
             mixer.music.pause()
             firstDisplay = False
+            startPlaying2PlayerButton.pressed = False
             twoPlayerScreen()
             #if the button is pressed we are done with the first display
 
@@ -1164,6 +1169,8 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
     global yJumpImg
     global timeFrozen
     global time
+    global gameOver
+    global timeWonGame
 
     singlePlayerScreen = True
 
@@ -1171,8 +1178,19 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         time += 1
 
         clock.tick(1000)
-
-         #to make sure when our playing is jumping and is frozen it does not stay in the air
+        
+        #stop the game when a player scores 7 goals
+        if gameOver and abs(time - timeWonGame) == 20:
+            play = False
+            gameOver = False
+            firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
+        #check if one of the players has reached the maximum score allowed
+        if (player.goalCount == 7 or guestPlayer.goalCount == 7) and not gameOver:
+            gameOver = True
+            timeWonGame = time
+            player.frozen = True
+            guestPlayer.frozen = True
+        #to make sure when our playing is jumping and is frozen it does not stay in the air
         if player.frozen:
             player.y = heightScreen - player.height
 
@@ -1270,15 +1288,6 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         screen.blit(pygame.image.load("Head Soccer Background Dani Edited.png"), (0,0))
         black = (0,0,0)
         green = (0, 255, 0)
-        #rectangle for debugging purposes
-        #rectangle of player1 and ellipse
-        #pygame.draw.rect(screen, black,(player.x + 18, player.y + 25, player.width - 38, player.height  - 28),5)
-        #pygame.draw.ellipse(screen, green, (player.x + 7, player.y + 5, player.width - 16, player.height - 55), 4)
-
-        #rectangle of guestPlayer and ellipse
-        #pygame.draw.rect(screen, black, (guestPlayer.x + 6, guestPlayer.y + 50, guestPlayer.width - 23, guestPlayer.height - 47), 5)
-        #pygame.draw.ellipse(screen, green, (guestPlayer.x - 5, guestPlayer.y - 5, guestPlayer.width + 2 , guestPlayer.height - 35), 4)
-        ######################################
 
         ##############################################
         #The following lines update the current position of the objects
@@ -1462,6 +1471,8 @@ def twoPlayerScreen():
     global jumpImgShowing
     global incrementJumpGuestPlayer
     global timeFrozen
+    global gameOver
+    global timeWonGame
 
     time += 1
     play = True
@@ -1470,6 +1481,16 @@ def twoPlayerScreen():
         
         time += 1
 
+        if gameOver and abs(time - timeWonGame) == 20:
+            play = False
+            gameOver = False
+            firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
+        #check if one of the players has reached the maximum score allowed
+        if (player.goalCount == 7 or guestPlayer.goalCount == 7) and not gameOver:
+            player.frozen = True
+            guestPlayer.frozen = True
+            gameOver = True
+            timeWonGame = time
         #to make sure when our playing is jumping and is frozen it does not stay in the air
         if player.frozen:
             player.y = heightScreen - player.height
@@ -1612,8 +1633,9 @@ def twoPlayerScreen():
 ################################################
 ################################################
 
+timeWonGame = 0
 runPygame = True
-firstRun = True
+gameOver = False
 startPlaying2PlayerButton = createStartPlaying2PlayerButton()
 startPlayingAIButton = createButtonAI()
 startInstructions = createInstructionsButton()
