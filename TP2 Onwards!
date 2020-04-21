@@ -769,8 +769,26 @@ def createInstructionsButton():
     instructionsButton = Button(xButton, yButton, widthButton, heightButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
     return instructionsButton
 
+#create the back to intro screen button
+def createBacktoIntroButton():
+    global widthScreen
+                       
+    widthButton = 250               
+    heightButton = 55   
+    xButton = widthScreen//2 + 110 - widthButton                       
+    yButton = 450                
+    xCenterTextButton = xButton + (widthButton / 2)             
+    yCenterTextButton = yButton + (heightButton / 2) + 2             
+    black = (0, 0, 0)
+    buttonColor = (102, 178, 255)
+    textPlayingButton = "Back to Main Menu"
+    fontButton = pygame.font.Font('freesansbold.ttf', 25)
+    pressed = False
+    #create the button and return it
+    backToIntroButton = Button(xButton, yButton, widthButton, heightButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
+    return backToIntroButton
 #create the instructions screen
-def createInstructionsScreen(heightScreen, widthScreen):
+def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions):
     global superJumpImg
     global runFastImg
 
@@ -790,50 +808,104 @@ def createInstructionsScreen(heightScreen, widthScreen):
     powers = '3 Powers Available'
     powersText = font.render(powers, True, red)
     powersRect = instructionsText.get_rect()
-    powersRect.center = (widthScreen / 2, 80)
+    powersRect.center = (widthScreen // 2, 80)
 
     extraSpeed = 'ExtraSpeed'
     extraSpeedText = font.render(extraSpeed, True, yellow)
     extraSpeedRect = extraSpeedText.get_rect()
-    extraSpeedRect.center = (widthScreen / 2 - 400, 140)
+    extraSpeedRect.center = (widthScreen // 2 - 400, 140)
 
     frozen = 'Frozen'
     frozenText = font.render(frozen, True, blue)
     frozenRect = frozenText.get_rect()
-    frozenRect.center = (widthScreen / 2 - 15, 140)
+    frozenRect.center = (widthScreen // 2 - 15, 140)
 
     superJump = 'SuperJump'
     superJumpText = font.render(superJump, True, coral)
     superJumpRect = frozenText.get_rect()
-    superJumpRect.center = (widthScreen / 2 + 360, 140)
+    superJumpRect.center = (widthScreen // 2 + 360, 140)
 
-    superJumpD = 'Increases jump by 0.25'
+    superJumpD = 'Increases jump'
     superJumpDText = font.render(superJumpD, True, white)
     superJumpDRect = superJumpDText.get_rect()
-    superJumpDRect.center = (widthScreen / 2 + 360, 270)
+    superJumpDRect.center = (widthScreen // 2 + 400, 260)
+
+    superJumpD1 = 'by 0.50'
+    superJumpD1Text = font.render(superJumpD1, True, white)
+    superJumpD1Rect = superJumpD1Text.get_rect()
+    superJumpD1Rect.center = (widthScreen // 2 + 400, 310)
 
     instructionsScreen = pygame.display.set_mode((widthScreen, heightScreen))
     instructionsScreenBackgroundImg = pygame.image.load("Instructions.jpg")
     instructionsDisplay = True
 
+    frozen1 = 'Score 3 more goals'
+    frozenText1 = font.render(frozen1, True, white)
+    frozenText1Rect = frozenText1.get_rect()
+    frozenText1Rect.center = (widthScreen//2 - 15, 200)
+
+    frozen2 = 'than your opponnent.'
+    frozenText2 = font.render(frozen2, True, white)
+    frozenText2Rect = frozenText2.get_rect()
+    frozenText2Rect.center = (widthScreen//2 - 15, 240)
+
+    frozen3 = 'Only applicable once.'
+    frozenText3 = font.render(frozen3, True, white)
+    frozenText3Rect = frozenText3.get_rect()
+    frozenText3Rect.center = (widthScreen//2 - 15, 300)
+
+    speed1 = 'Increases speed'
+    speed1Text = font.render(speed1, True, white)
+    speed1TextRect = speed1Text.get_rect()
+    speed1TextRect.center = (widthScreen//2 - 400, 250)
+
+    speed2 = 'by 0.25'
+    speed2Text = font.render(speed2, True, white)
+    speed2TextRect = speed2Text.get_rect()
+    speed2TextRect.center = (widthScreen//2 - 415, 290)
+
+    backButton = createBacktoIntroButton()
+
     while instructionsDisplay:
+        
+        instructionsScreen.blit((instructionsScreenBackgroundImg), (0,0))
+        backButton.displayButton(screen)
 
         #to quit out of the screen
         for event in pygame.event.get():
+            mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+            backButton.overButton(mouseCoordX, mouseCoordY)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                backButton.pressedButton(mouseCoordX, mouseCoordY)
+
             if event.type == pygame.QUIT:
                 instructionsDisplay = False
                 pygame.quit() 
                 os._exit(0)
 
-        instructionsScreen.blit((instructionsScreenBackgroundImg), (0,0))
+        #########################################################################################
+        ####################### BUGG HERE TO FIX ################################################
+        #########################################################################################
+        if backButton.pressedButton:
+            pass
+        #     instructionsDisplay = False
+        #     firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
+
         screen.blit(instructionsText, instructionsRect)
         screen.blit(powersText, powersRect)
         screen.blit(extraSpeedText, extraSpeedRect)
         screen.blit(frozenText, frozenRect)
         screen.blit(superJumpText, superJumpRect)
-        screen.blit(superJumpImg, (widthScreen / 2 + 387, 180))
-        screen.blit(runFastImg, ((widthScreen / 2 - 425, 170)))
+        screen.blit(superJumpImg, (widthScreen // 2 + 387, 180))
+        screen.blit(runFastImg, ((widthScreen // 2 - 425, 170)))
         screen.blit(superJumpDText, superJumpDRect)
+        screen.blit(superJumpD1Text, superJumpD1Rect)
+        screen.blit(frozenText1, frozenText1Rect)
+        screen.blit(frozenText2, frozenText2Rect)
+        screen.blit(frozenText3, frozenText3Rect)
+        screen.blit(speed1Text, speed1TextRect)
+        screen.blit(speed2Text, speed2TextRect)
         pygame.display.flip()
 
 
@@ -877,9 +949,8 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
             #if the button is pressed we are done with the first display
 
         if startInstructions.pressed:
-            mixer.music.pause()
             firstDisplay = False
-            createInstructionsScreen(heightScreen, widthScreen)
+            createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
