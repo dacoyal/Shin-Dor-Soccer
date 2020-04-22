@@ -757,7 +757,7 @@ def createButtonAI():
 
 def createInstructionsButton():
     #properties of the button
-    xButton = (75 + 160 + 50)
+    xButton = (75 + 160 + 50 + 35)
     yButton = 498    
     widthButton = 180
     heightButton = 55
@@ -790,8 +790,62 @@ def createBacktoIntroButton():
     #create the button and return it
     backToIntroButton = Button(xButton, yButton, widthButton, heightButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
     return backToIntroButton
+
+#createt the leaderboard button
+def createLeaderboardButton():
+    global widthScreen
+                       
+    widthButton = 200               
+    heightButton = 55   
+    xButton = 585                       
+    yButton = 498               
+    xCenterTextButton = xButton + (widthButton / 2)             
+    yCenterTextButton = yButton + (heightButton / 2) + 2             
+    black = (0, 0, 0)
+    buttonColor = (102, 178, 255)
+    textPlayingButton = "Leaderboard"
+    fontButton = pygame.font.Font('freesansbold.ttf', 25)
+    pressed = False
+    #create the button and return it
+    leaderboardButton = Button(xButton, yButton, widthButton, heightButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
+    return leaderboardButton
+
+#create the leaderboard screen
+def createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
+
+    background = pygame.image.load("Instructions.jpg")
+
+    backButton = createBacktoIntroButton()
+
+    topLeft = (0, 0)
+
+    leaderboardDisplay = True
+
+    while leaderboardDisplay:
+        for event in pygame.event.get():
+            mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+            backButton.overButton(mouseCoordX, mouseCoordY)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                backButton.pressedButton(mouseCoordX, mouseCoordY)
+
+            if event.type == pygame.QUIT:
+                instructionsDisplay = False
+                pygame.quit() 
+                os._exit(0)
+
+
+        if backButton.pressed:
+            instructionsDisplay = False
+            firstScreenAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
+        
+        screen.blit(background, topLeft)
+        backButton.displayButton(screen)
+        pygame.display.flip()
+
+
 #create the instructions screen
-def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions):
+def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
     global superJumpImg
     global runFastImg
 
@@ -886,7 +940,7 @@ def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraem
 
         if backButton.pressed:
             instructionsDisplay = False
-            firstScreenAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
+            firstScreenAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
             
         instructionsScreen.blit((instructionsScreenBackgroundImg), (0,0))
         screen.blit(instructionsText, instructionsRect)
@@ -910,7 +964,7 @@ def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraem
 ##############################################
 #This function displays the first screen######
 ##############################################
-def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions):
+def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
 
     introScreen = pygame.display.set_mode((widthScreen, heightScreen))
     firstDisplay = True
@@ -937,12 +991,15 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
             startPlaying2PlayerButton.overButton(mouseCoordX, mouseCoordY)
             startPlayingAIButton.overButton(mouseCoordX, mouseCoordY)
             startInstructions.overButton(mouseCoordX, mouseCoordY)
+            leaderboardButton.overButton(mouseCoordX, mouseCoordY)
 
             if(event.type == pygame.MOUSEBUTTONDOWN):
 
                 startPlaying2PlayerButton.pressedButton(mouseCoordX, mouseCoordY)
                 startPlayingAIButton.pressedButton(mouseCoordX, mouseCoordY)
                 startInstructions.pressedButton(mouseCoordX, mouseCoordY)
+                leaderboardButton.pressedButton(mouseCoordX, mouseCoordY)
+                print(leaderboardButton.pressed)
 
         if startPlayingAIButton.pressed:
             mixer.music.pause()
@@ -959,8 +1016,12 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
 
         if startInstructions.pressed:
             firstDisplay = False
-            createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
+            createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
 
+        if leaderboardButton.pressed:
+            leaderboardButton.pressed = False
+            firstDisplay = False
+            createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
         ################################
         #display of intro screen########
         ################################
@@ -973,10 +1034,11 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
         startPlaying2PlayerButton.displayButton(introScreen)
         startPlayingAIButton.displayButton(introScreen)
         startInstructions.displayButton(introScreen)
+        leaderboardButton.displayButton(introScreen)
         pygame.display.flip()
 
 #we create this screen so that the music will not restart playing after hitting the go back to main screen after instructions
-def firstScreenAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions):
+def firstScreenAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
 
     introScreen = pygame.display.set_mode((widthScreen, heightScreen))
     firstDisplay = True
@@ -1001,12 +1063,14 @@ def firstScreenAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, do
             startPlaying2PlayerButton.overButton(mouseCoordX, mouseCoordY)
             startPlayingAIButton.overButton(mouseCoordX, mouseCoordY)
             startInstructions.overButton(mouseCoordX, mouseCoordY)
+            leaderboardButton.overButton(mouseCoordX, mouseCoordY)
 
             if(event.type == pygame.MOUSEBUTTONDOWN):
 
                 startPlaying2PlayerButton.pressedButton(mouseCoordX, mouseCoordY)
                 startPlayingAIButton.pressedButton(mouseCoordX, mouseCoordY)
                 startInstructions.pressedButton(mouseCoordX, mouseCoordY)
+                leaderboardButton.pressedButton(mouseCoordX, mouseCoordY)
 
         if startPlayingAIButton.pressed:
             mixer.music.pause()
@@ -1023,8 +1087,12 @@ def firstScreenAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, do
 
         if startInstructions.pressed:
             firstDisplay = False
-            createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
+            createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
 
+        if leaderboardButton.pressed:
+            leaderboardButton.pressed = False
+            firstDisplay = False
+            createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
         ################################
         #display of intro screen########
         ################################
@@ -1037,6 +1105,7 @@ def firstScreenAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, do
         startPlaying2PlayerButton.displayButton(introScreen)
         startPlayingAIButton.displayButton(introScreen)
         startInstructions.displayButton(introScreen)
+        leaderboardButton.displayButton(introScreen)
         pygame.display.flip()
 
 ###################################################################
@@ -1701,8 +1770,8 @@ gameOver = False
 startPlaying2PlayerButton = createStartPlaying2PlayerButton()
 startPlayingAIButton = createButtonAI()
 startInstructions = createInstructionsButton()
-
+leaderboardButton = createLeaderboardButton()
 while runPygame:
     
     # initial screen
-    firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
+    firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
