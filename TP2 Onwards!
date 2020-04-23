@@ -29,7 +29,8 @@ screen.blit(pygame.image.load("Head Soccer Background Dani Edited.png"), (0,0))
 pygame.display.set_caption("ShinDor Soccer")
 
 #declare variables
-
+#<div>Icons made by <a href="https://www.flaticon.com/authors/alfredo-hernandez" title="Alfredo Hernandez">Alfredo Hernandez</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+xImg = pygame.image.load("xbutton.png")
 #pause image gotten from: https://www.clipartmax.com/download/m2i8Z5H7Z5G6Z5G6_389-free-vector-icons-red-pause-button-png/
 pauseImg = pygame.image.load("Pause.png")
 ##Soccer gotten from: http://www.pngmart.com/image/592
@@ -882,7 +883,7 @@ def createPauseButton():
     width = 40
     height = 38 
     pressed = False
-    return PauseGame( width, height, x, y, pressed)
+    return PauseGame(width, height, x, y, pressed)
 
 
 def createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
@@ -1124,6 +1125,18 @@ def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraem
         screen.blit(speed2Text, speed2TextRect)
         backButton.displayButton(screen)
         pygame.display.flip()
+
+#create the pause menu
+def createPauseMenu(screen):
+    global widthScreen
+    blue = (102, 178, 255)
+    rectWidth = 400
+    rectHeight = 125
+    rectX = widthScreen//2 - 175
+    rectY = heightScreen//2 - rectHeight//2 + 125
+
+    pygame.draw.rect(screen, blue, (rectX, rectY, rectWidth, rectHeight))
+
 
 
 ##############################################
@@ -1467,14 +1480,6 @@ def mediumAI(cpu, soccer, widthScreen, goalWidth):
         if cpu.jumpHeight + cpu.y <= soccer.y + soccer.height or cpu.jumping and soccer.y + soccer.width <= cpu.y:
             cpu.jump(soccer)
             cpu.x += (2 + cpu.extraSpeed)
-
-#this function uses Pythagoran Theorem to calculate the hypotenuse of a triangle
-def hypotenuse(x, y):
-    return math.sqrt(x**2 + y**2)
-
-#convert from degree to radian
-def radian(angle):
-    return angle * (math.pi/180)
     
 #Create the screen that will be popped if we select "Single Player"
 def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer):
@@ -1882,14 +1887,16 @@ def twoPlayerScreen():
     global pauseButton
     global pauseImg
     global pauseGame
+    global quitButton
+    global xImg
 
     time += 1
     play = True
 
     while play:
-
+        
+        #check if the user pauses the game
         if pauseButton.pressed:
-            print("Hello \n") 
             pauseGame = not pauseGame
             pauseButton.pressed = False
         
@@ -2032,17 +2039,17 @@ def twoPlayerScreen():
 
             checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
 
-            for event in pygame.event.get():
+        for event in pygame.event.get():
 
-                if event.type == pygame.QUIT:
-                    play = False
-                    pygame.quit()
-                    os._exit(0)
+            if event.type == pygame.QUIT:
+                play = False
+                pygame.quit()
+                os._exit(0)
 
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    (mouseX, mouseY) = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
-                    pauseButton.pressedPause(mouseX, mouseY)
-            
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                (mouseX, mouseY) = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+                pauseButton.pressedPause(mouseX, mouseY)
+        
         
         #sets the background color of the display
         screen.blit(pygame.image.load("Head Soccer Background Dani Edited.png"), (0,0))
@@ -2063,6 +2070,29 @@ def twoPlayerScreen():
         if speedImgShowing:
             screen.blit(runFastImg, (speedX, speedY))
 
+        if pauseGame:
+
+            paused = "Paused Game"
+            pausedText = font.render(paused, True, (0, 0, 0))
+            pausedTextRect = pausedText.get_rect()
+            pausedTextRect.center = (575, 400)
+            
+            createPauseMenu(screen)
+            screen.blit(pausedText, pausedTextRect)
+
+            for event in pygame.event.get():
+
+                if event == pygame.MOUSEBUTTONDOWN:
+                    mouseX, mouseY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+                    quitButton.pressedPause(mouseX, mouseY)
+
+            if quitButton.pressed:
+                play = False
+                pygame.quit()
+                os._exit(0)
+
+            screen.blit(xImg, (widthScreen//2, heightScreen//2 + 125))
+
         pygame.display.flip()
 
 ################################################
@@ -2080,7 +2110,10 @@ startInstructions = createInstructionsButton()
 leaderboardButton = createLeaderboardButton()
 easyButton = createEasyButton()
 mediumButton = createMediumButton()
+
+widthQuit, heightQuit, xQuit, yQuit, pressedQuit = (35, 35, widthScreen//2, heightScreen//2 + 125, False)
 pauseButton = createPauseButton()
+quitButton = PauseGame(widthQuit, heightQuit, xQuit, yQuit, pressedQuit)
 AIlevel = None
 pauseGame = False
 
