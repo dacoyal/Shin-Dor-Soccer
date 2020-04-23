@@ -207,7 +207,7 @@ class Ball(object):
             guestPlayer.x = goalWidth + 5
             goal_Sound = mixer.Sound("Goal Audio.mp3")
             
-            if player.goalCount != 7:
+            if player.goalCount != 1:
                 goal_Sound.play()
 
     
@@ -226,7 +226,8 @@ class Ball(object):
             guestPlayer.x = goalWidth + 5
             player.x = widthScreen - playerWidth - goalWidth - 5
             goal_Sound = mixer.Sound("Goal Audio.mp3")
-            if guestPlayer.goalCount != 7:
+
+            if guestPlayer.goalCount != 1:
                 goal_Sound.play()
     
     
@@ -672,12 +673,8 @@ incrementJumpGuestPlayer = False
 score = ""
 currentLeaderboard = []
 firstScoreInts = ''
-#connect to the server
-# n = Network()
-# startPos = read_pos(n.getPos())
-###################################
+
 #let's create three objects, our player, the other player and the soccer ball
-#####################################################
 soccer = Ball(soccerX, soccerY, soccerWidth, soccerHeight, soccerBDX, soccerBDY, friction, soccerGravity, airResistance)
 player = SoccerPlayer(playerWidth, playerHeight, playerX, playerY, playerBDY, jumping, jumpHeightPlayer, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, secureJumpHeightPlayer)
 guestPlayer = DoraemonPlayer(playerWidth, playerHeight, guestPlayerX, guestPlayerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, secureJumpHeight)
@@ -1423,7 +1420,9 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         
         #stop the game when a player scores 7 goals
         #create our score string for the leaderBoard
-        if gameOver and abs(time - timeWonGame) == 20:
+        if gameOver:
+            win_Sound = mixer.Sound("Winning Sound.mp3")
+            win_Sound.play()
             play = False
             gameOver = False
             scoreList = [guestPlayer.goalCount, player.goalCount]
@@ -1434,8 +1433,8 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
             guestPlayer.frozen = False
             speedImgShowing = False
             jumpImgShowing = False
-            runF
-            firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
+            pygame.time.wait(2000)
+            firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
         #check if one of the players has reached the maximum score allowed
         if (player.goalCount == 7 or guestPlayer.goalCount == 7) and not gameOver:
             gameOver = True
@@ -1503,7 +1502,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
             guestPlayer.frozen = False
             beenFreezed = True
 
-        applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
+        mediumAI(guestPlayer, soccer, widthScreen, goalWidth)
 
         checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
 
@@ -1522,7 +1521,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
             
             if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
                 player.jumping = True
-                applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
+                mediumAI(guestPlayer, soccer, widthScreen, goalWidth)
             
             if player.jumping:
                 player.jump(soccer)
@@ -1765,7 +1764,9 @@ def twoPlayerScreen():
         elif guestPlayer.frozen:
             guestPlayer.y = heightScreen - guestPlayer.height
 
-        if gameOver and abs(time - timeWonGame) == 20:
+        if gameOver:
+            win_Sound = mixer.Sound("Winning Sound.mp3")
+            win_Sound.play()
             play = False
             gameOver = False
             scoreList = [guestPlayer.goalCount, player.goalCount]
@@ -1777,6 +1778,7 @@ def twoPlayerScreen():
             speedImgShowing = False
             jumpImgShowing = False
             fillLeaderboard()
+            pygame.time.wait(2000)
             firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
         #check if one of the players has reached the maximum score allowed
         if (player.goalCount == 1 or guestPlayer.goalCount == 1) and not gameOver:
@@ -1892,14 +1894,6 @@ def twoPlayerScreen():
                 pygame.quit()
                 os._exit(0)
 
-
-        #send the information of the updated player to the server
-        #print(f'guestPlayer.x: {guestPlayer.x} , guestPlayer.y: {guestPlayer.y}')
-        #print(f'player.x: {player.x} , player.y: {player.y}')
-        # guestPlayerPos = read_pos(n.send(make_pos((player.x, player.y))))
-        # #print(guestPlayerPos)
-        # guestPlayer.x = guestPlayerPos[0]
-        # guestPlayer.y = guestPlayerPos[1]
                 
         #sets the background color of the display
         screen.blit(pygame.image.load("Head Soccer Background Dani Edited.png"), (0,0))
@@ -1934,7 +1928,10 @@ startPlaying2PlayerButton = createStartPlaying2PlayerButton()
 startPlayingAIButton = createButtonAI()
 startInstructions = createInstructionsButton()
 leaderboardButton = createLeaderboardButton()
+# n = Network()
+# p = n.getPos()
+
 while runPygame:
-    
     # initial screen
+    # p2 = n.send(p)
     firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
