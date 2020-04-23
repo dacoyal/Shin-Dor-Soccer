@@ -810,6 +810,44 @@ def createLeaderboardButton():
     leaderboardButton = Button(xButton, yButton, widthButton, heightButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
     return leaderboardButton
 
+#create the easy AI Button
+def createEasyButton():
+    global widthScreen
+                       
+    widthButton = 200               
+    heightButton = 55   
+    xButton = widthScreen//2 - widthButton - 50                      
+    yButton = heightScreen//2            
+    xCenterTextButton = xButton + (widthButton / 2)             
+    yCenterTextButton = yButton + (heightButton / 2) + 2             
+    black = (0, 0, 0)
+    buttonColor = (102, 178, 255)
+    textPlayingButton = "Easy"
+    fontButton = pygame.font.Font('freesansbold.ttf', 25)
+    pressed = False
+    #create the button and return it
+    easyButton = Button(xButton, yButton, widthButton, heightButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
+    return easyButton
+
+#create the medium AI Button
+def createMediumButton():
+    global widthScreen
+                       
+    widthButton = 200               
+    heightButton = 55   
+    xButton = widthScreen//2 - widthButton + 250                   
+    yButton = heightScreen//2            
+    xCenterTextButton = xButton + (widthButton / 2)             
+    yCenterTextButton = yButton + (heightButton / 2) + 2             
+    black = (0, 0, 0)
+    buttonColor = (102, 178, 255)
+    textPlayingButton = "Medium"
+    fontButton = pygame.font.Font('freesansbold.ttf', 25)
+    pressed = False
+    #create the button and return it
+    mediumButton = Button(xButton, yButton, widthButton, heightButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
+    return mediumButton
+
 #create the leaderboard screen
 def createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
     global currentLeaderboard
@@ -1102,7 +1140,8 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
             player.jumpHeight = 8.5
             guestPlayer.jumpHeight = 8 
             time = 0
-            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer)
+            createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer)
+            #createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer)
 
         if startPlaying2PlayerButton.pressed:
             mixer.music.pause()
@@ -1215,6 +1254,7 @@ def firstScreenAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, do
 ###################################################################
 ############ CODE AI PROJECT STARTS HERE ##########################
 ###################################################################
+
 #basic intelligence will only move based on the soccer position
 def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
     #first the AI should go towards the soccer
@@ -1300,6 +1340,7 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
                 cpu.x += 2
 
 #medium level AI
+#similar to simple but with some more conditions
 def mediumAI(cpu, soccer, widthScreen, goalWidth):
        #first the AI should go towards the soccer
     epsilon = 10**-2
@@ -1410,6 +1451,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
     global scoreList
     global speedImgShowing
     global jumpImgShowing
+    global AIlevel
 
     singlePlayerScreen = True
 
@@ -1501,8 +1543,10 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
             player.frozen = False
             guestPlayer.frozen = False
             beenFreezed = True
-
-        mediumAI(guestPlayer, soccer, widthScreen, goalWidth)
+        if AIlevel == "Easy":
+            applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
+        if AIlevel == "Medium":
+            mediumAI(guestPlayer, soccer, widthScreen, goalWidth)
 
         checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
 
@@ -1511,12 +1555,12 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         if not player.frozen:
 
             if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
-                player.x += 10     
+                player.x += 8     
                 player.rectangleX = player.x
         
         
             if keyPressed[pygame.K_LEFT] and player.x >= goalWidth - player.width + 20:         #the purpose of the and is to ensure the player does not go outside of the left bound
-                player.x -= 10                       #0.15
+                player.x -= 8                       #0.15
                 player.rectangleX = player.x
             
             if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
@@ -1558,6 +1602,59 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
     
         pygame.display.flip()
 
+#screen where the user will be able to choose what level to play agains
+def createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer):
+    global AIlevel
+    global easyButton
+    global mediumButton
+
+    introBackgroundImg = pygame.image.load("Instructions.jpg")
+    topLeft = (0, 0)
+    white = (255, 255, 255)
+    
+    levelScreen = pygame.display.set_mode((widthScreen, heightScreen))
+    createLevels = True
+
+    text = "Pick the level of difficulty"
+    makeText = font.render(text, True, white)
+    makeTextRect = makeText.get_rect()
+    makeTextRect.center = (widthScreen//2, 100)
+
+    while createLevels:
+
+        for event in pygame.event.get():
+            mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+            easyButton.overButton(mouseCoordX, mouseCoordY)
+            mediumButton.overButton(mouseCoordX, mouseCoordY)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                easyButton.pressedButton(mouseCoordX, mouseCoordY)
+                mediumButton.pressedButton(mouseCoordX, mouseCoordY)
+
+            if event.type == pygame.QUIT:
+                createLevels = False
+                pygame.quit() 
+                os._exit(0)
+
+
+        if easyButton.pressed:
+            AIlevel = "Easy"
+            easyButton.pressed = False
+            createLevels = False
+            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
+
+        if mediumButton.pressed:
+            AIlevel = "Medium"
+            mediumButton.pressed = False
+            createLevels = False
+            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
+        
+        levelScreen.blit(introBackgroundImg, topLeft)
+        easyButton.displayButton(levelScreen)
+        mediumButton.displayButton(levelScreen)
+        levelScreen.blit(makeText, makeTextRect)
+        pygame.display.flip()
+    
 
 ##################################################
 #Keeps track of the number of goals of each player
@@ -1718,19 +1815,6 @@ def fillLeaderboard():
         currentLeaderboard.append(score)
         return
 
-
-#Next two functions from: https://techwithtim.net/tutorials/python-online-game-tutorial/connecting-multiple-clients/
-
-def read_pos(pos):
-    pos = pos.split(",")
-    return int(pos[0]), int(pos[1])
-
-
-def make_pos(tup):
-    return str(tup[0]) + "," + str(tup[1])
-
-
-
 #this function contains the code for the two player screen
 def twoPlayerScreen():
     global player
@@ -1848,7 +1932,7 @@ def twoPlayerScreen():
         
 
         clock.tick(10000)
-
+        
         keyPressed = pygame.key.get_pressed() #gets the key that it is being pressed
 
         #this makes sure the player can move continously so that we do not have to press the key multiple times
@@ -1928,6 +2012,10 @@ startPlaying2PlayerButton = createStartPlaying2PlayerButton()
 startPlayingAIButton = createButtonAI()
 startInstructions = createInstructionsButton()
 leaderboardButton = createLeaderboardButton()
+easyButton = createEasyButton()
+mediumButton = createMediumButton()
+AIlevel = None
+
 # n = Network()
 # p = n.getPos()
 
