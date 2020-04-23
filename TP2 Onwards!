@@ -669,6 +669,9 @@ runFastWidth = 24
 runFastHeight = 40
 incrementJumpPlayer = False
 incrementJumpGuestPlayer = False
+score = ""
+currentLeaderboard = []
+firstScoreInts = ''
 #connect to the server
 # n = Network()
 # startPos = read_pos(n.getPos())
@@ -812,6 +815,79 @@ def createLeaderboardButton():
 
 #create the leaderboard screen
 def createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
+    global currentLeaderboard
+    text = ''
+    text = ''
+    text1 = ''
+    text2 = ''
+    numText = 0
+    makeText = None
+    makeTextRect = None
+    white = (255, 255, 255)
+    yellow = (255, 255, 0)
+    blue = (0,191,255)
+    red = (255, 0, 0)
+    
+    head = "Highest Scores are recorded"
+    head1 = "Left Score is Doraemon"
+    head2 = "Right Score is Shin-Chan"
+    
+    makeHead = font.render(head, True, red)
+    makeHeadRect = makeHead.get_rect()
+    makeHeadRect.center = (widthScreen//2, 60)
+    
+    makeHead1 = font.render(head1, True, blue)
+    makeHeadRect1 = makeHead1.get_rect()
+    makeHeadRect1.center = (widthScreen//2, 100)
+
+    makeHead2 = font.render(head2, True, yellow)
+    makeHeadRect2 = makeHead2.get_rect()
+    makeHeadRect2.center = (widthScreen//2, 140)
+
+    if len(currentLeaderboard) == 0:
+        text = "No games played yet"
+        makeText = font.render(text, True, white)
+        makeTextRect = makeText.get_rect()
+        makeTextRect.center = (widthScreen//2, heightScreen//2)
+
+    elif len(currentLeaderboard) == 1:
+        text = "Only Score: " + str(currentLeaderboard[0])
+        makeText = font.render(text, True, white)
+        makeTextRect = makeText.get_rect()
+        makeTextRect.center = (widthScreen//2 - 15, heightScreen//2 - 15)
+        numText = 1
+
+    elif len(currentLeaderboard) == 2:
+        text = "Best Score: " + str(currentLeaderboard[0])
+        text1 = "Second Best Score: " + str(currentLeaderboard[1])
+
+        makeText = font.render(text, True, white)
+        makeTextRect = makeText.get_rect()
+        makeTextRect.center = (widthScreen//2 - 10 , heightScreen//2 - 25)
+
+        makeText1 = font.render(text1, True, white)
+        makeTextRect1 = makeText.get_rect()
+        makeTextRect1.center = (widthScreen//2 - 75, heightScreen//2 + 20)
+
+        numText = 2
+
+    elif len(currentLeaderboard) >= 3:
+        text ="Best Score: " + str(currentLeaderboard[0])
+        text1 = "Second Best Score: " + str(currentLeaderboard[1])
+        text2 = "Third Best Score: " + str(currentLeaderboard[2])
+
+        makeText = font.render(text, True, white)
+        makeTextRect = makeText.get_rect()
+        makeTextRect.center = (widthScreen//2 - 20, heightScreen//2 - 50)
+
+        makeText1 = font.render(text1, True, white)
+        makeTextRect1 = makeText.get_rect()
+        makeTextRect1.center = (widthScreen//2 - 75, heightScreen//2)
+
+        makeText2 = font.render(text2, True, white)
+        makeTextRect2 = makeText2.get_rect()
+        makeTextRect2.center = (widthScreen//2, heightScreen//2 + 50)
+        numText = 3
 
     background = pygame.image.load("Instructions.jpg")
 
@@ -822,6 +898,7 @@ def createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemo
     leaderboardDisplay = True
 
     while leaderboardDisplay:
+
         for event in pygame.event.get():
             mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
             backButton.overButton(mouseCoordX, mouseCoordY)
@@ -840,6 +917,22 @@ def createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemo
             firstScreenAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
         
         screen.blit(background, topLeft)
+
+        if numText == 0 or numText == 1:
+            screen.blit(makeText, makeTextRect)
+
+        elif numText == 2:
+            screen.blit(makeText, makeTextRect)
+            screen.blit(makeText1, makeTextRect1)
+
+        elif numText == 3:
+            screen.blit(makeText, makeTextRect)
+            screen.blit(makeText1, makeTextRect1)
+            screen.blit(makeText2, makeTextRect2)
+
+        screen.blit(makeHead, makeHeadRect)
+        screen.blit(makeHead2, makeHeadRect2)
+        screen.blit(makeHead1, makeHeadRect1)
         backButton.displayButton(screen)
         pygame.display.flip()
 
@@ -965,6 +1058,7 @@ def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraem
 #This function displays the first screen######
 ##############################################
 def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
+    global time
 
     introScreen = pygame.display.set_mode((widthScreen, heightScreen))
     firstDisplay = True
@@ -999,18 +1093,31 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
                 startPlayingAIButton.pressedButton(mouseCoordX, mouseCoordY)
                 startInstructions.pressedButton(mouseCoordX, mouseCoordY)
                 leaderboardButton.pressedButton(mouseCoordX, mouseCoordY)
-                print(leaderboardButton.pressed)
 
         if startPlayingAIButton.pressed:
             mixer.music.pause()
             firstDisplay = False
             startPlayingAIButton.pressed = False
+            player.frozen = False
+            guestPlayer.frozen = False
+            guestPlayer.extraSpeed = 0
+            player.extraSpeed = 0
+            player.jumpHeight = 8.5
+            guestPlayer.jumpHeight = 8 
+            time = 0
             createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer)
 
         if startPlaying2PlayerButton.pressed:
             mixer.music.pause()
             firstDisplay = False
             startPlaying2PlayerButton.pressed = False
+            player.frozen = False
+            guestPlayer.frozen = False
+            guestPlayer.extraSpeed = 0
+            player.extraSpeed = 0
+            player.jumpHeight = 8.5
+            guestPlayer.jumpHeight = 8 
+            time = 0
             twoPlayerScreen()
             #if the button is pressed we are done with the first display
 
@@ -1302,6 +1409,10 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
     global time
     global gameOver
     global timeWonGame
+    global score
+    global scoreList
+    global speedImgShowing
+    global jumpImgShowing
 
     singlePlayerScreen = True
 
@@ -1311,9 +1422,19 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         clock.tick(1000)
         
         #stop the game when a player scores 7 goals
+        #create our score string for the leaderBoard
         if gameOver and abs(time - timeWonGame) == 20:
             play = False
             gameOver = False
+            scoreList = [guestPlayer.goalCount, player.goalCount]
+            score = str(scoreList[0]) + "-" + str(scoreList[1])
+            guestPlayer.goalCount = 0
+            player.goalCount = 0
+            player.frozen = False
+            guestPlayer.frozen = False
+            speedImgShowing = False
+            jumpImgShowing = False
+            runF
             firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
         #check if one of the players has reached the maximum score allowed
         if (player.goalCount == 7 or guestPlayer.goalCount == 7) and not gameOver:
@@ -1572,10 +1693,32 @@ def readFile(path):
     with open(path, "rt") as f:
         return f.read()
 
-#creates our leaderBoard
+#creates our leaderBoard with the best scores sorted in order of best to worst
 def fillLeaderboard():
-    fileName = 'Leaderboard.csv'
-    leaderBoard = readFile(fileName)
+    global score
+    global currentLeaderboard
+    global firstScoreInts
+
+    #if the length of the list is 0 we just add the new score
+    if len(currentLeaderboard) == 0:
+        currentLeaderboard.append(score)
+
+    #if the length of the list is not 0 then we just compare our current score to the rest of the scores
+    elif len(currentLeaderboard) != 0:
+        for i in range(len(currentLeaderboard)):
+            #we get the first score we will compare it to
+            compareScore = currentLeaderboard[i]
+            if abs(int(compareScore[0]) - int(compareScore[2])) <= abs(int(score[0]) - int(score[2])):
+                scoreList.insert(i, score)
+                currentLeaderboard.insert(i, score)
+                return
+
+        #if the function has not returned anything it means the score difference is lesser than all of the current ones so just append the new score
+
+        scoreList.append(score)
+        currentLeaderboard.append(score)
+        return
+
 
 #Next two functions from: https://techwithtim.net/tutorials/python-online-game-tutorial/connecting-multiple-clients/
 
@@ -1604,6 +1747,10 @@ def twoPlayerScreen():
     global timeFrozen
     global gameOver
     global timeWonGame
+    global scoreList
+    global score
+    global speedImgShowing
+    global jumpImgShowing
 
     time += 1
     play = True
@@ -1612,12 +1759,27 @@ def twoPlayerScreen():
         
         time += 1
 
+        if player.frozen:
+            player.y = heightScreen - player.height
+
+        elif guestPlayer.frozen:
+            guestPlayer.y = heightScreen - guestPlayer.height
+
         if gameOver and abs(time - timeWonGame) == 20:
             play = False
             gameOver = False
-            firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions)
+            scoreList = [guestPlayer.goalCount, player.goalCount]
+            score = str(scoreList[0]) + "-" + str(scoreList[1])
+            guestPlayer.goalCount = 0
+            player.goalCount = 0
+            player.frozen = False
+            guestPlayer.frozen = False
+            speedImgShowing = False
+            jumpImgShowing = False
+            fillLeaderboard()
+            firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
         #check if one of the players has reached the maximum score allowed
-        if (player.goalCount == 7 or guestPlayer.goalCount == 7) and not gameOver:
+        if (player.goalCount == 1 or guestPlayer.goalCount == 1) and not gameOver:
             player.frozen = True
             guestPlayer.frozen = True
             gameOver = True
@@ -1727,8 +1889,9 @@ def twoPlayerScreen():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 play = False
-                pygame.quit()  	# ensures pygame module closes properly
-                os._exit(0)	    # ensure the window closes
+                pygame.quit()
+                os._exit(0)
+
 
         #send the information of the updated player to the server
         #print(f'guestPlayer.x: {guestPlayer.x} , guestPlayer.y: {guestPlayer.y}')
