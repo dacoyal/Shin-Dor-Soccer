@@ -1782,6 +1782,8 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 guestPlayer.jumpHeight = 8
                 soccer.x = widthScreen//2
                 soccer.y = heightScreen//2 - 20
+                speedImgShowing = False
+                jumpImgShowing = False
                 restartButton.pressed = False
                 pauseGame = not pauseGame
 
@@ -2009,53 +2011,41 @@ def fillLeaderboard():
     global score
     global currentLeaderboard
     global firstScoreInts
+    global compareScore
 
-    #if the length of the list is 0 we just add the new score
-    if len(currentLeaderboard) == 0:
-        currentLeaderboard.append(score)
+    scoresfile = []
+    fileL = readFile('Leaderboard')
+    saveScores = ""
+    #unfortunately when the file is empty the length of it is 1 insteaf of 0 (bc of space or something) so we check if the file is length 1
+    if len(fileL) == 1:
+        writeFile('Leaderboard', score)
+   
+    else:
+        #convert our file into a list containing all the scores. Ex: ['2-0', '2-1', '2-2']
+        for savedScore in fileL.split(","):
+            currentLeaderboard.append(savedScore)
 
-    #if the length of the list is not 0 then we just compare our current score to the rest of the scores
-    elif len(currentLeaderboard) != 0:
         for i in range(len(currentLeaderboard)):
-            #we get the first score we will compare it to
             compareScore = currentLeaderboard[i]
-            if abs(int(compareScore[0]) - int(compareScore[2])) <= abs(int(score[0]) - int(score[2])):
+            if abs(int(compareScore[0]) - int(compareScore[2])) < abs(int(score[0]) - int(score[2])):
                 currentLeaderboard.insert(i, score)
-                return
+                
+                #to save the scores put them in a string
+                for everyScore in currentLeaderboard:
+                    saveScores += everyScore + ","
+                #once we save all our scores in saveScores write it to the file
+            
+            #let's say our score was not greater than any of the previous but it was smaller.... we still add it
+            if abs(int(compareScore[0]) - int(compareScore[2])) > abs(int(score[0]) - int(score[2])):
+                currentLeaderboard.append(score)
+                #again, save all the scores in saveScores
+                for everyScore in currentLeaderboard:
+                    saveScores += everyScore + ","
 
-        #if the function has not returned anything it means the score difference is lesser than all of the current ones so just append the new score
+            #finally we can write all the scores into the file
+            writeFile('Leaderboard', saveScores[0:len(saveScores) - 1])
 
-        currentLeaderboard.append(score)
-
-        # writeFile('Leaderboard', 'hello')
-        return
-
-    # leaderboard =[]
-    # fileName = 'Leaderboard'
-    # currentLeaderboard = readFile(fileName)
-    
-    # if len(currentLeaderboard) != 1:
-    #     for line in currentLeaderboard:
-    #         leaderboard.append(line)
-    # print(leaderboard)
-    # #if the length of the list is 0 we just add the new score
-    # if len(leaderboard) == 0:
-    #     leaderboard.append(score)
-
-    # #if the length of the list is not 0 then we just compare our current score to the rest of the scores
-    # elif len(leaderboard) != 0:
-    #     for i in range(len(leaderboard)):
-    #         #we get the first score we will compare it to
-    #         compareScore = leaderboard[i]
-    #         if abs(int(compareScore[0]) - int(compareScore[2])) <= abs(int(score[0]) - int(score[2])):
-    #             leaderboard.insert(i, score)
-    #             writeFile(fileName, compareScore)
-    #             return
-
-    #     #if the function has not returned anything it means the score difference is lesser than all of the current ones so just append the new score
-
-    #     writeFile(fileName, compareScore)
-    #     return
+    fileL = readFile('Leaderboard')
 
 #this function contains the code for the two player screen
 def twoPlayerScreen():
@@ -2108,9 +2098,9 @@ def twoPlayerScreen():
                 # player.y = heightScreen - player.height
                 lose_Sound = mixer.Sound("Sad Violin Airhorn.mp3")
                 win_Sound = mixer.Sound("Winning Sound.mp3")
-                if guestPlayer.goalCount == 1:
+                if guestPlayer.goalCount == 2:
                     lose_Sound.play()
-                elif player.goalCount == 1:
+                elif player.goalCount == 2:
                     win_Sound.play()
                 play = False
                 gameOver = False
@@ -2130,7 +2120,7 @@ def twoPlayerScreen():
                 lose_Sound.stop()
                 firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
             #check if one of the players has reached the maximum score allowed
-            if (player.goalCount == 1 or guestPlayer.goalCount == 1) and not gameOver:
+            if (player.goalCount == 2 or guestPlayer.goalCount == 2) and not gameOver:
                 player.frozen = True
                 guestPlayer.frozen = True
                 gameOver = True
@@ -2276,7 +2266,7 @@ def twoPlayerScreen():
             colorsDoraemon = [(102, 178, 255), (255, 255, 255)]
             colorsShinChan = [(255,0,0), (255, 255, 0)]
             for circle in range(3000):
-                if player.goalCount == 1:
+                if player.goalCount == 2:
                     color = colorsShinChan[random.randint(0, len(colorsShinChan) - 1)]
                 else:
                     color = colorsDoraemon[random.randint(0, len(colorsDoraemon) - 1)]
@@ -2318,6 +2308,8 @@ def twoPlayerScreen():
                 guestPlayer.jumpHeight = 8
                 soccer.x = widthScreen//2
                 soccer.y = heightScreen//2 - 20
+                speedImgShowing = False
+                jumpImgShowing = False
                 restartButton.pressed = False
                 pauseGame = not pauseGame
 
@@ -2325,6 +2317,22 @@ def twoPlayerScreen():
             if quitButton.pressed:
                 pauseGame = not pauseGame
                 quitButton.pressed = False
+                speedImgShowing = False
+                jumpImgShowing = False
+                soccer.BDY = 0
+                soccer.BDX = 0
+                player.x = widthScreen - goalWidth - player.width
+                guestPlayer.x = goalWidth + guestPlayer.width/2
+                player.goalCount = 0
+                guestPlayer.goalCount = 0
+                guestPlayer.extraSpeed = 0
+                player.extraSpeed = 0
+                player.jumpHeightSecure = 8.5
+                player.jumpHeight = 8.5
+                guestPlayer.jumpHeightSecure = 8
+                guestPlayer.jumpHeight = 8
+                soccer.x = widthScreen//2
+                soccer.y = heightScreen//2 - 20
                 firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
 
             screen.blit(xImg, (widthScreen//2 - 85, heightScreen//2 + 137))
@@ -2342,6 +2350,7 @@ def twoPlayerScreen():
 ################################################
 ################################################
 
+compareScore = 0
 timeWonGame = 0
 runPygame = True
 gameOver = False
@@ -2372,5 +2381,3 @@ while runPygame:
     # initial screen
     # p2 = n.send(p)
     firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
-
-#Pause button, restart, or go back
