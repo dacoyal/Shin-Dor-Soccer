@@ -2451,7 +2451,13 @@ def twoPlayerScreen():
         #The following lines update the current position of the objects
         ##############################################
         screen.blit(soccerImg, (soccer.x, soccer.y))
-        screen.blit(doramiImg, (player.x, player.y))                            #THIS WAS CHANGED TO DORAMI
+
+        #make sure we are displaying the right player
+        if doramiChosen:
+            screen.blit(doramiImg, (player.x, player.y))
+        else:
+            screen.blit(playerImg, (player.x, player.y))
+
         screen.blit(guestPlayerImg, (guestPlayer.x, guestPlayer.y))
         screen.blit(goalLeftImg, (0, heightScreen - goalHeight))
         screen.blit(goalRightImg, (widthScreen - goalWidth, heightScreen - goalHeight))
@@ -2660,7 +2666,7 @@ def afterChoosingPlayer(widthScreen, heightScreen, shinChanIntroImg, doraemonInt
                 os._exit(0)
         
         if circles != 1200:
-            pygame.draw.circle(screen, red, (random.randint(2, widthScreen), random.randint(2 , heightScreen)), 30)
+            pygame.draw.circle(screen, red, (random.randint(2, widthScreen), random.randint(2 , heightScreen + 30)), 30)
             circles += 1
 
         if circles == 1200:
@@ -2669,6 +2675,11 @@ def afterChoosingPlayer(widthScreen, heightScreen, shinChanIntroImg, doraemonInt
             screen.blit(saveText3, saveText3Rect)
 
             for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    run = False
+                    pygame.quit() 
+                    os._exit(0)
+                
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     background_Sound.stop()
                     run = False
