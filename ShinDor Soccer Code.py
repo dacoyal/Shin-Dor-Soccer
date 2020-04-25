@@ -1,5 +1,4 @@
-
-  #####################################################################################
+#####################################################################################
 # 15-112:Fundamentals of Programming and Computer Science
 # Carnegie Mellon University
 # Final Project: ShinDor Soccer
@@ -11,9 +10,15 @@ import pygame
 import os
 import math
 import time
-import numpy as np
 from pygame import mixer
 import random
+from datetime import datetime
+
+#this will get the current hour and time of today
+#we should make it so that at 8 PM the bacground should be dark since it is night
+today = datetime.now()
+hourToday = today.hour
+minuteToday = today.minute
 
 pygame.init()
 
@@ -29,7 +34,10 @@ screen.blit(pygame.image.load("Head Soccer Background Dani Edited.png"), (0,0))
 pygame.display.set_caption("ShinDor Soccer")
 
 #declare variables
-
+#<div>Icons made by <a href="https://www.flaticon.com/authors/alfredo-hernandez" title="Alfredo Hernandez">Alfredo Hernandez</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
+xImg = pygame.image.load("xbutton.png")
+#pause image gotten from: https://www.clipartmax.com/download/m2i8Z5H7Z5G6Z5G6_389-free-vector-icons-red-pause-button-png/
+pauseImg = pygame.image.load("Pause.png")
 ##Soccer gotten from: http://www.pngmart.com/image/592
 soccerImg = pygame.image.load("Soccer.png")
 #Doraemon gotten from: https://www.pngfind.com/mpng/hJohToh_free-download-doraemon-png-clipart-doraemon-doraemon-transparent/
@@ -39,10 +47,16 @@ playerImg = pygame.image.load("Shin Chan Right.png")
 #Goal Image gotten from: https://www.seekpng.com/idown/u2q8e6y3t4w7y3r5_soccer-goal-sprite-006-soccer-goal-sprite-sheet/
 goalLeftImg = pygame.image.load("Goal Left.png")
 goalRightImg = pygame.image.load("Goal Right.png")
-#Up Icon made by <a href="https://www.flaticon.com/authors/freepik" title="Freepik">Freepik</a> from <a href="https://www.flaticon.com/" title="Flaticon"> www.flaticon.com</a>
+#Up Icon made by Daniela Ruiz Gomez
 superJumpImg = pygame.image.load("Super Jump Dani Resized.png")
 #Image made by Daniela Ruiz Gomez
 runFastImg = pygame.image.load("Run Fast Dani Edited.png")
+#https://www.pngitem.com/middle/iTJxi_3d-play-button-png-transparent-png/
+playImg = pygame.image.load("Play.png")
+#https://www.kindpng.com/downpng/obboRo_restart-button-being-more-experienced-team-leaders-so-delhi-logo-png-transparent/
+restartImg = pygame.image.load("Restart.png")
+#https://imgbin.com/download-png/7Ayuc7gZ
+doramiImg = pygame.image.load("Dorami.png")
 
 goalHeight = 250
 goalWidth = 127
@@ -58,10 +72,18 @@ shinChanIntroImg = pygame.image.load("Shin Chan Intro.png")
 #Soccer Intro png gotten from: https://clipartpng.com/?855,soccer-ball-png-clipart
 soccerIntroImg = pygame.image.load("Soccer Intro.png")
 
+#readFile and writeFile from: https://www.cs.cmu.edu/~112/notes/notes-strings.html
+def readFile(path):
+    with open(path, "rt") as f:
+        return f.read()
+
+def writeFile(path, contents):
+    with open(path, "wt") as f:
+        f.write(contents)
+
 #############################
-#create classes for ball, players and buttons
+#create classes for ball, players, buttons and pause
 #############################
-    
 class Button(object):
 
     def __init__(self, x, y, width, height, fontButton, color1, colorButton, text, xCenterText, yCenterText, pressed):
@@ -76,7 +98,10 @@ class Button(object):
         self.xCenter = xCenterText
         self.yCenter = yCenterText
         self.pressed = pressed
+        self.saveColor1 = color1
+        self.saveColorButton = colorButton
 
+    #displayButton creates the button and displays it
     def displayButton(self, screen):
         textButton = self.font.render(self.text, True, self.color1)
         buttonRectangle = textButton.get_rect()
@@ -84,12 +109,43 @@ class Button(object):
         pygame.draw.rect(screen, self.colorButton, (self.x, self.y, self.width, self.height))
         screen.blit(textButton, buttonRectangle)
 
+    #overButton changes the color of the button if we put our mouse over it, to improve the user experience
+    def overButton(self, mouseCoordX, mouseCoordY):
+        black = (0, 0, 0)
+        yellow = (255, 255, 0)
+        #now check that the mouseCoordX and mouseCoordY are in the range of the rectangle we drew
+        if ((mouseCoordX >= self.x and mouseCoordX <= self.x + self.width) and 
+        (mouseCoordY >= self.y and mouseCoordY <= self.y + self.height)):
+            self.color1 = black
+            self.colorButton = yellow
+        else:
+            self.color1 = self.saveColor1
+            self.colorButton = self.saveColorButton
+
+    #pressedButton checks to see if the mouseButton was pressed and if it is pressed it changes the color of the button back to its original color
     def pressedButton(self, mouseCoordX, mouseCoordY):
         #now check that the mouseCoordX and mouseCoordY are in the range of the rectangle we drew
         if ((mouseCoordX >= self.x and mouseCoordX <= self.x + self.width) and 
         (mouseCoordY >= self.y and mouseCoordY <= self.y + self.height)):
+            self.color1 = self.saveColor1
+            self.colorButton = self.saveColorButton
             self.pressed = True
         #check if the mouse coordinates are inside the button range. If it is the button has been pressed
+
+class PauseGame(object):
+
+    def __init__(self, width, height, x, y, pressed):
+        self.width = width
+        self.height = height
+        self.x = x
+        self.y = y
+        self.pressed = pressed
+
+    def pressedPause(self, mouseCoordX, mouseCoordY):
+        if ((mouseCoordX >= self.x and mouseCoordX <= self.x + self.width) and 
+        (mouseCoordY >= self.y and mouseCoordY <= self.y + self.height)):
+            self.pressed = True
+
 
 class Ball(object):
 
@@ -164,7 +220,7 @@ class Ball(object):
 
     def checkForCollisionPostofGoal(self, goalHeight, goalWidth, widthScreen, heightScreen):
         if ((self.y <= heightScreen - goalHeight - 25) and 
-        ((self.x + self.width >= widthScreen - goalWidth + 3) or (self.x <= goalWidth - 3))):
+        ((self.x + self.width >= widthScreen - goalWidth - 3) or (self.x <= goalWidth + 3))):
             self.BDX *= -1
             if self.BDX < 0:
                 self.x -= 5
@@ -183,11 +239,19 @@ class Ball(object):
             self.BDY = 0
             self.y = heightScreen//2 - 20
             self.x = widthScreen//2
-            player.goalCount += 1
+            guestPlayer.x = goalWidth + guestPlayer.width/2
+            guestPlayer.y = heightScreen - guestPlayer.height
+            player.y = heightScreen - player.height
             player.x = widthScreen - playerWidth - goalWidth - 5
-            guestPlayer.x = goalWidth + 5
+            guestPlayer.jumpHeight = guestPlayer.jumpHeightSecure
+            player.jumpHeight = player.jumpHeightSecure
+            player.jumping = False
+            guestPlayer.jumping = False
+            player.goalCount += 1
             goal_Sound = mixer.Sound("Goal Audio.mp3")
-            goal_Sound.play()
+            
+            if player.goalCount != 1:
+                goal_Sound.play()
 
     
     def checkForGuestPlayerGoal(self, guestPlayer, widthScreen, heightScreen, goalWidth, goalHeight, player):
@@ -197,15 +261,23 @@ class Ball(object):
         if self.x + self.width > (widthScreen - goalWidth + 1.5*self.width) and self.y > heightScreen - goalHeight - 25:
             self.x = widthScreen - self.width
             guestPlayer.scoredGoal = True
+            guestPlayer.jumping = False
+            player.jumping = False
             self.BDX = 0
             self.BDY = 0
             self.y = heightScreen//2 - 20
             self.x = widthScreen//2
             guestPlayer.goalCount += 1
             guestPlayer.x = goalWidth + 5
+            guestPlayer.y = heightScreen - guestPlayer.height
             player.x = widthScreen - playerWidth - goalWidth - 5
+            player.y = heightScreen - player.height
+            guestPlayer.jumpHeight = guestPlayer.jumpHeightSecure
+            player.jumpHeight = player.jumpHeightSecure
             goal_Sound = mixer.Sound("Goal Audio.mp3")
-            goal_Sound.play()
+
+            if guestPlayer.goalCount != 1:
+                goal_Sound.play()
     
     
     def checkForBallCollisionsAndGravity(self, heightScreen, widthScreen, epsilon):
@@ -280,7 +352,7 @@ class SoccerPlayer(object):
         (soccer.x > self.x + 2)  and
         (soccer.x + soccer.width < self.x + self.width) and 
         (abs(soccer.x - self.x)) < abs(soccer.x + soccer.width - self.x - self.width)):
-            soccer.x = self.x - 5
+            # soccer.x = self.x - 5
             soccer.BDY = 10*math.sin(70)
             soccer.BDX = -10*math.cos(70)
             collided = True
@@ -311,13 +383,14 @@ class SoccerPlayer(object):
         (soccer.x + soccer.width >= self.x + 20) and 
         (soccer.x + soccer.width < self.x + self.width/2)):
             #if the player is jumping
+            
             if self.jumping:
                 soccer.BDY = 9*math.sin(-70)
-                soccer.BDX = -12*math.cos(70)
+                soccer.BDX = -12*math.cos(70) - 0.25
         
             elif soccer.BDY <0: #meaning the ball is moving upwards
                 soccer.BDY = 8*math.sin(-70)
-                soccer.BDX = -8*math.cos(70)
+                soccer.BDX = -8*math.cos(70) - 0.25
                 soccer.x -= 10
 
             elif soccer.BDY > 0:  #if the ball is moving downwards
@@ -359,11 +432,11 @@ class SoccerPlayer(object):
             #if the player is jumping then we apply the sin and cos as if a force was applied creating a physics-parabola effect
             if self.jumping:
                 soccer.BDY = -12*math.sin(70)
-                soccer.BDX = 12*math.cos(70)
+                soccer.BDX = 12*math.cos(70) + 0.25
 
             elif soccer.BDY < 0:            #this means the soccer is moving upwards
                 soccer.BDY = -10*math.sin(70)
-                soccer.BDX = 8*math.cos(70)
+                soccer.BDX = 8*math.cos(70) + 0.25
                 soccer.x += 10
 
             elif soccer.BDY > 0 and soccer.y <= self.y + self.width/2:            #this checks if the ball is moving downwards
@@ -443,9 +516,9 @@ class DoraemonPlayer(SoccerPlayer):
         (soccer.x > self.x + 2)  and
         (soccer.x + soccer.width < self.x + self.width) and 
         (abs(soccer.x - self.x)) < abs(soccer.x + soccer.width - self.x - self.width)):
-            soccer.x = self.x - 10
+            # soccer.x = self.x - 10
             soccer.BDY = 9.5*math.sin(70)
-            soccer.BDX = -7*math.cos(70)
+            soccer.BDX = -7*math.cos(70) - 0.25
             collided = True
             self.collidedTimes += 1
 
@@ -455,7 +528,7 @@ class DoraemonPlayer(SoccerPlayer):
         if( (self.jumping) and (soccer.y + soccer.height <= self.y + self.height) and
         (soccer.y >= self.y) and (soccer.x > self.x) and (soccer.x <= self.x + 5)):
             soccer.BDY = 11*math.sin(-70)
-            soccer.BDX = -9*math.cos(70)
+            soccer.BDX = -9*math.cos(70) - 0.25
             collided = True
             self.collidedTimes += 1
 
@@ -464,23 +537,23 @@ class DoraemonPlayer(SoccerPlayer):
         (soccer.y >= self.y) and (soccer.x + soccer.width <= self.x + self.width - 3) and
         (soccer.x + soccer.width >= self.x + self.width + 5)): 
             soccer.BDY  = 10*math.sin(-70)
-            soccer.BDX = 8*math.cos(70)
+            soccer.BDX = 8*math.cos(70) + 0.25
             collided = True
             self.collidedTimes += 1
 
         #This checks if the ball was hit with the upper half of the body and
-        if ((soccer.y >= self.y - 3) and 
+        if ((soccer.y >= self.y - 15 ) and 
         (soccer.y <= self.y + self.height/2) and 
-        (soccer.x + soccer.width >= self.x ) and 
+        (soccer.x + soccer.width >= self.x - 10) and 
         (soccer.x + soccer.width <= self.x + self.width/2)):
             #if the player is jumping
             if self.jumping:
                 soccer.BDY = 11*math.sin(-70)
-                soccer.BDX = -9*math.cos(70)
+                soccer.BDX = -9*math.cos(70) - 0.25
 
             elif soccer.BDY <0: #meaning the ball is moving upwards
                 soccer.BDY = 11*math.sin(-70)
-                soccer.BDX = -9*math.cos(70)
+                soccer.BDX = -9*math.cos(70) - 1
                 soccer.x -= 10
                
             elif soccer.BDY > 0:  #if the ball is moving downwards
@@ -495,10 +568,10 @@ class DoraemonPlayer(SoccerPlayer):
                 elif soccer.BDX < 0 :
                     soccer.BDX -= 0.5
                     soccer.applyXMovement()
-                
-                soccer.x = self.x - 30
-                soccer.applyGravity()
 
+                # soccer.x = self.x - 30
+                soccer.applyGravity()
+                    
             collided = True
             self.collidedTimes += 1
     
@@ -513,11 +586,10 @@ class DoraemonPlayer(SoccerPlayer):
                 soccer.BDX = -3
                 soccer.applyXMovement()
     
-
             #this second if statement applies if the ball is bouncing
             elif soccer.BDX == 0 and soccer.gravity != 0:
                 soccer.BDX = -0.25
-                soccer.x = self.x - 20
+                # soccer.x = self.x - 20
                 
             else:
                 soccer.BDX *= -1
@@ -529,14 +601,14 @@ class DoraemonPlayer(SoccerPlayer):
         #check if the ball hits the right side of the player
         #first check for the upper half (head)
 
-        if ((soccer.y >= self.y - 3) and 
+        if ((soccer.y >= self.y - 15) and 
         (soccer.y <= self.y + self.height/2) and 
         (soccer.x >= self.x + self.width/2) and 
         (soccer.x <= self.x + self.width - 5)):
             #if the player is jumping then we apply the sin and cos as if a force was applied creating a physics-parabola effect
             if self.jumping:
                 soccer.BDY = -10*math.sin(70)
-                soccer.BDX = 9*math.cos(70)
+                soccer.BDX = 9*math.cos(70) + 0.25
 
             elif soccer.BDY < 0:            #this means the soccer is moving upwards
                 soccer.BDY = -10*math.sin(70)
@@ -578,10 +650,197 @@ class DoraemonPlayer(SoccerPlayer):
     def checkBallHitsMiddleHead(self, soccer, epsilon):
         #if the ball hits the player directly in the middle (so like directly in head)
         #doraemon has a bigger head so we need to change this
-        if (
-        ((soccer.y + soccer.height >= self.y - 5) and (soccer.x >= self.x) and
+        if self.jumping and (
+        ((soccer.y + soccer.height >= self.y - 100) and (soccer.x >= self.x) and
         (soccer.x + soccer.width <= self.x + self.width - 3)) and soccer.BDY > 0):
             soccer.BDY *= -1
+            self.collidedTimes += 1
+            return True
+
+        elif ( not self.jumping and
+        ((soccer.y + soccer.height >= self.y - 3) and (soccer.x >= self.x) and
+        (soccer.x + soccer.width <= self.x + self.width - 3)) and soccer.BDY > 0):
+            soccer.BDY *= -1.1
+            self.collidedTimes += 1
+
+            return True
+        return False
+
+#do the collisions for Dorami
+class DoramiPlayer(SoccerPlayer):
+    #we can call the init function from our soccerPlayer class since it will take the same values
+    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure):
+        super().__init__(width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure)
+
+
+    def checkPlayerHittingBall(self, soccer, heightScreen, widthScreen):
+        #in pygame the x point is represented as the leftmost point
+        collided = False
+        #check if the ball hits the left side of the player
+        self.checkBallHitsMiddleHead(soccer, epsilon)
+        #first let us check if the ball is inside the body of our player and to the right
+        if (not self.checkBallHitsMiddleHead(soccer, epsilon) and 
+        (soccer.y >= self.y - 7) and 
+        (soccer.y + soccer.width  <= self.y + self.width) and 
+        (soccer.x > self.x + 2)  and
+        (soccer.x + soccer.width < self.x + self.width) and 
+        (abs(soccer.x - self.x)) > abs(soccer.x + soccer.width - self.x - self.width)):
+            soccer.BDY *= -1
+            collided = True
+            self.collidedTimes += 1
+
+        #checks if it is inside the player's body and if it is to the left of it
+        elif (not self.checkBallHitsMiddleHead(soccer, epsilon) and 
+        (soccer.y >= self.y) and 
+        (soccer.y + soccer.width  <= self.y + self.width) and 
+        (soccer.x > self.x + 2)  and
+        (soccer.x + soccer.width < self.x + self.width) and 
+        (abs(soccer.x - self.x)) < abs(soccer.x + soccer.width - self.x - self.width)):
+            # soccer.x = self.x - 10
+            soccer.BDY = 9.5*math.sin(70)
+            soccer.BDX = -7*math.cos(70) - 0.25
+            collided = True
+            self.collidedTimes += 1
+
+        #Im going to make it so if the player is jumping and the ball is hit by the player the ball goes upwards
+
+        #checking if it collides in the left
+        if( (self.jumping) and (soccer.y + soccer.height <= self.y + self.height) and
+        (soccer.y >= self.y) and (soccer.x > self.x) and (soccer.x <= self.x + 5)):
+            soccer.BDY = 11*math.sin(-70)
+            soccer.BDX = -9*math.cos(70) - 0.25
+            collided = True
+            self.collidedTimes += 1
+
+        #if it collides in the right 
+        elif ((self.jumping) and (soccer.y + soccer.height <= self.y + self.width - 5) and
+        (soccer.y >= self.y) and (soccer.x + soccer.width <= self.x + self.width - 3) and
+        (soccer.x + soccer.width >= self.x + self.width + 5)): 
+            soccer.BDY  = 10*math.sin(-70)
+            soccer.BDX = 8*math.cos(70) + 0.25
+            collided = True
+            self.collidedTimes += 1
+
+        #This checks if the ball was hit with the upper half of the body and
+        if ((soccer.y >= self.y - 15 ) and 
+        (soccer.y <= self.y + self.height/2) and 
+        (soccer.x + soccer.width >= self.x - 10) and 
+        (soccer.x + soccer.width <= self.x + self.width/2)):
+            #if the player is jumping
+            if self.jumping:
+                soccer.BDY = 11*math.sin(-70)
+                soccer.BDX = -9*math.cos(70) - 0.25
+
+            elif soccer.BDY <0: #meaning the ball is moving upwards
+                soccer.BDY = 11*math.sin(-70)
+                soccer.BDX = -9*math.cos(70) - 1
+                soccer.x -= 10
+               
+            elif soccer.BDY > 0:  #if the ball is moving downwards
+                if soccer.BDX == 0:
+                    soccer.BDX = -2
+                    soccer.applyXMovement()
+
+                elif soccer.BDX > 0:
+                    soccer.BDX *= -1
+                    soccer.applyXMovement()
+
+                elif soccer.BDX < 0 :
+                    soccer.BDX -= 0.5
+                    soccer.applyXMovement()
+
+                # soccer.x = self.x - 30
+                soccer.applyGravity()
+                    
+            collided = True
+            self.collidedTimes += 1
+    
+
+        #this applies to the lower half of the left side of the player
+        elif ((soccer.y >= self.y) and 
+        (soccer.y <= self.y + self.height)  and 
+        (soccer.x + soccer.width >= self.x + 20) and 
+        (soccer.x + soccer.width < self.x + self.width/2 )):
+            #this first if statement applies for when the ball is not bouncing
+            if soccer.BDX == 0 and abs(soccer.BDY) < 2:
+                soccer.BDX = -3
+                soccer.applyXMovement()
+    
+            #this second if statement applies if the ball is bouncing
+            elif soccer.BDX == 0 and soccer.gravity != 0:
+                soccer.BDX = -0.25
+                # soccer.x = self.x - 20
+                
+            else:
+                soccer.BDX *= -1
+
+            soccer.x = self.x - 10
+            collided = True
+            self.collidedTimes += 1
+
+        #check if the ball hits the right side of the player
+        #first check for the upper half (head)
+
+        if ((soccer.y >= self.y - 15) and 
+        (soccer.y <= self.y + self.height/2) and 
+        (soccer.x >= self.x + self.width/2) and 
+        (soccer.x <= self.x + self.width - 5)):
+            #if the player is jumping then we apply the sin and cos as if a force was applied creating a physics-parabola effect
+            if self.jumping:
+                soccer.BDY = -10*math.sin(70)
+                soccer.BDX = 9*math.cos(70) + 0.25
+
+            elif soccer.BDY < 0:            #this means the soccer is moving upwards
+                soccer.BDY = -10*math.sin(70)
+                soccer.BDX = 9*math.cos(70)
+                soccer.x += 10
+                
+            elif soccer.BDY > 0 and soccer.y <= self.y + self.width/2:            #this checks if the ball is moving downwards
+                soccer.BDX *= -1
+                soccer.BDX += 2
+                soccer.x += 10
+
+            collided = True
+            self.collidedTimes +=1 
+            
+        #lower half of right side of the player
+        elif ((soccer.y >= self.y) and 
+        (soccer.y <= self.y + self.height) and
+        (soccer.x >= self.x + self.width/2) and 
+        (soccer.x <= self.x + self.width - 20)):
+            #the first if statement checks if the ball is not bouncing
+            if soccer.BDX == 0 and abs(soccer.BDY) < 2:
+                soccer.BDX = 3
+                soccer.applyXMovement()
+                
+            #this applies for when the ball is bouncing
+            elif soccer.BDX == 0 and soccer.gravity != 0:
+                soccer.BDX = 0.25
+
+            else:
+                soccer.BDX *= -1
+
+            soccer.x = self.x + self.width - 10
+            collided = True
+            self.collidedTimes += 1
+
+        return collided
+
+
+    def checkBallHitsMiddleHead(self, soccer, epsilon):
+        #if the ball hits the player directly in the middle (so like directly in head)
+        #doraemon has a bigger head so we need to change this
+        if self.jumping and (
+        ((soccer.y + soccer.height >= self.y - 100) and (soccer.x >= self.x) and
+        (soccer.x + soccer.width <= self.x + self.width - 3)) and soccer.BDY > 0):
+            soccer.BDY *= -1
+            self.collidedTimes += 1
+            return True
+
+        elif ( not self.jumping and
+        ((soccer.y + soccer.height >= self.y - 3) and (soccer.x >= self.x) and
+        (soccer.x + soccer.width <= self.x + self.width - 3)) and soccer.BDY > 0):
+            soccer.BDY *= -1.1
             self.collidedTimes += 1
 
             return True
@@ -599,9 +858,7 @@ soccerBDY = 0
 soccerBDX = 0
 playerWidth = 81
 playerHeight = 100
-playerX = widthScreen - playerWidth - goalWidth - 5   #playerX = 800 - 81 = 719 (rightMostPoint)
 playerY = heightScreen - playerHeight
-guestPlayerX = goalWidth + 5
 guestPlayerY = playerY
 playerBDY = 0
 soccerGravity = 0.25              #2*10**-4
@@ -612,13 +869,15 @@ marginErrorBounce = 10
 epsilon = 1
 jumping = False
 jumpHeight = 8
+jumpHeightPlayer = 8.5
+secureJumpHeightPlayer = jumpHeightPlayer
 secureJumpHeight = jumpHeight
 scoredGoal = False
 goalCount = 0
-green = (0, 255, 0)
-blue = (0, 0, 128)
+black = (0, 0, 0)
+blue = (102, 178, 255)
 font = pygame.font.Font('freesansbold.ttf', 32)
-textGoal = font.render('GOOOOOOOOOOOOOAAAAAL', True, green, blue)
+textGoal = font.render('GOOOOOOOOOOOOOAAAAAL', True, black, blue)
 textGoalRectangle = textGoal.get_rect()
 pressedButton = False
 extraSpeed = 0
@@ -632,19 +891,33 @@ speedImgShowing = False
 xJumpImg, yJumpImg = ((random.randint(widthScreen//2 - 300, widthScreen//2 + 300), 40))
 speedX, speedY = (random.randint(widthScreen//2 - 300, widthScreen//2 + 300), 40)
 goalPost = 25
-###################################
-#let's create three objects, our player, the other player and the soccer ball
-#####################################################
-soccer = Ball(soccerX, soccerY, soccerWidth, soccerHeight, soccerBDX, soccerBDY, friction, soccerGravity, airResistance)
-player = SoccerPlayer(playerWidth, playerHeight, playerX, playerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, secureJumpHeight)
-guestPlayer = DoraemonPlayer(playerWidth, playerHeight, guestPlayerX, guestPlayerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, secureJumpHeight)
+jumpImgWidth = 30
+jumpImgHeight = 41
+runFastWidth = 24
+runFastHeight = 40
+incrementJumpPlayer = False
+incrementJumpGuestPlayer = False
+score = ""
+currentLeaderboard = []
+firstScoreInts = ''
+playerX = widthScreen - goalWidth - playerWidth
+guestPlayerX = goalWidth + playerWidth/2
+doramiHeight = 117
+doramiWidth = 81
+doramiY = heightScreen - doramiHeight
+doramiX = doramiWidth//2 + goalWidth
 
+#let's create three objects, our player, the other player and the soccer ball
+soccer = Ball(soccerX, soccerY, soccerWidth, soccerHeight, soccerBDX, soccerBDY, friction, soccerGravity, airResistance)
+player = SoccerPlayer(playerWidth, playerHeight, playerX, playerY, playerBDY, jumping, jumpHeightPlayer, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, secureJumpHeightPlayer)
+guestPlayer = DoraemonPlayer(playerWidth, playerHeight, guestPlayerX, guestPlayerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, secureJumpHeight)
+dorami = DoramiPlayer(doramiWidth, doramiHeight, doramiX, doramiY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, secureJumpHeight)
 
 #############################################################################
 #THIS FUNCTION COMBINES A LOT OF THE FUNCTIONS ABOVE TO CHECK FOR A COLLISION AND FOR OUT OF BOUNDS
 ############################################################################
 def checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen):
-    #at the beginning of the loop make sure to reset the goal varibale if there has previously been a goal scored
+    #at the bginning of the loop make su   re to reset the goal varibale if there has previously been a goal scored
     if player.scoredGoal:
         player.scoredGoal = False
         screen.blit(textGoal, textGoalRectangle)
@@ -658,7 +931,7 @@ def checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, 
 
     soccer.checkForCollisionWithGround(heightScreen)
 
-    soccer.checkForAllowedXDirectionBall(widthScreen)
+    #soccer.checkForAllowedXDirectionBall(widthScreen)
 
     player.checkPlayerHittingBall(soccer, widthScreen, heightScreen)
     guestPlayer.checkPlayerHittingBall(soccer, widthScreen, heightScreen)
@@ -678,19 +951,19 @@ def checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, 
 #############################################
 def createStartPlaying2PlayerButton():
     #properties of the button
-    xstartButton = 295
+    xstartButton = 75         #295
     ystartButton = 498
     widthstartButton = 160
     heightstartButton = 55
-    xCenterTextButton = 375
-    yCenterTextButton = 525
-    green = (0, 255, 0)
-    buttonColor = (0, 0, 128)
+    xCenterTextButton = xstartButton + (widthstartButton / 2)     #200
+    yCenterTextButton = ystartButton + (heightstartButton / 2)
+    black = (0, 0, 0)
+    buttonColor = (102, 178, 255)
     textPlayingButton = "2 Player"
     fontButton = pygame.font.Font('freesansbold.ttf', 28)
     pressed = False
     #create the button and return it
-    startPlaying2PlayerButton = Button(xstartButton, ystartButton, widthstartButton, heightstartButton, fontButton, green, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
+    startPlaying2PlayerButton = Button(xstartButton, ystartButton, widthstartButton, heightstartButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
     return startPlaying2PlayerButton
 
 #################################################
@@ -699,65 +972,465 @@ def createStartPlaying2PlayerButton():
 
 def createButtonAI():
     #properties of the button
-    xButton = 660
-    yButton = 498
-    widthButton = 180
-    heightButton = 55
-    xCenterTextButton = 750
-    yCenterTextButton = 528
-    green = (0, 255, 0)
-    buttonColor = (0, 0, 128)
+    xButton = 875                       #660
+    yButton = 498                       #498
+    widthButton = 180                   #180
+    heightButton = 55                   #55
+    xCenterTextButton = xButton + (widthButton / 2)             #750
+    yCenterTextButton = yButton + (heightButton / 2) + 2             #528
+    black = (0, 0, 0)
+    buttonColor = (102, 178, 255)
     textPlayingButton = "Single Player"
     fontButton = pygame.font.Font('freesansbold.ttf', 25)
     pressed = False
     #create the button and return it
-    startPlayingAIButton = Button(xButton, yButton, widthButton, heightButton, fontButton, green, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
+    startPlayingAIButton = Button(xButton, yButton, widthButton, heightButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
     return startPlayingAIButton
+
+#create the button of the instructions screen
+
+def createInstructionsButton():
+    #properties of the button
+    xButton = (75 + 160 + 50 + 35)
+    yButton = 498    
+    widthButton = 180
+    heightButton = 55
+    xCenterTextButton = xButton + (widthButton / 2)
+    yCenterTextButton = yButton + (heightButton / 2) + 2
+    black = (0, 0, 0)
+    buttonColor = (102, 178, 255)
+    textPlayingButton = "Instructions"
+    fontButton = pygame.font.Font('freesansbold.ttf', 25)
+    pressed = False
+    #create the button and return it
+    instructionsButton = Button(xButton, yButton, widthButton, heightButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
+    return instructionsButton
+
+#create the back to intro screen button
+def createBacktoIntroButton():
+    global widthScreen
+                       
+    widthButton = 250               
+    heightButton = 55   
+    xButton = widthScreen//2 + 110 - widthButton                       
+    yButton = 450                
+    xCenterTextButton = xButton + (widthButton / 2)             
+    yCenterTextButton = yButton + (heightButton / 2) + 2             
+    black = (0, 0, 0)
+    buttonColor = (102, 178, 255)
+    textPlayingButton = "Back to Main Menu"
+    fontButton = pygame.font.Font('freesansbold.ttf', 25)
+    pressed = False
+    #create the button and return it
+    backToIntroButton = Button(xButton, yButton, widthButton, heightButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
+    return backToIntroButton
+
+#createt the leaderboard button
+def createLeaderboardButton():
+    global widthScreen
+                       
+    widthButton = 200               
+    heightButton = 55   
+    xButton = 585                       
+    yButton = 498               
+    xCenterTextButton = xButton + (widthButton / 2)             
+    yCenterTextButton = yButton + (heightButton / 2) + 2             
+    black = (0, 0, 0)
+    buttonColor = (102, 178, 255)
+    textPlayingButton = "Leaderboard"
+    fontButton = pygame.font.Font('freesansbold.ttf', 25)
+    pressed = False
+    #create the button and return it
+    leaderboardButton = Button(xButton, yButton, widthButton, heightButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
+    return leaderboardButton
+
+#create the easy AI Button
+def createEasyButton():
+    global widthScreen
+                       
+    widthButton = 200               
+    heightButton = 55   
+    xButton = widthScreen//2 - widthButton - 50                      
+    yButton = heightScreen//2            
+    xCenterTextButton = xButton + (widthButton / 2)             
+    yCenterTextButton = yButton + (heightButton / 2) + 2             
+    black = (0, 0, 0)
+    buttonColor = (102, 178, 255)
+    textPlayingButton = "Easy"
+    fontButton = pygame.font.Font('freesansbold.ttf', 25)
+    pressed = False
+    #create the button and return it
+    easyButton = Button(xButton, yButton, widthButton, heightButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
+    return easyButton
+
+#create the medium AI Button
+def createMediumButton():
+    global widthScreen
+                       
+    widthButton = 200               
+    heightButton = 55   
+    xButton = widthScreen//2 - widthButton + 250                   
+    yButton = heightScreen//2            
+    xCenterTextButton = xButton + (widthButton / 2)             
+    yCenterTextButton = yButton + (heightButton / 2) + 2             
+    black = (0, 0, 0)
+    buttonColor = (102, 178, 255)
+    textPlayingButton = "Hard"
+    fontButton = pygame.font.Font('freesansbold.ttf', 25)
+    pressed = False
+    #create the button and return it
+    mediumButton = Button(xButton, yButton, widthButton, heightButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
+    return mediumButton
+
+#create the pause button
+def createPauseButton():
+    global widthScreen
+
+    x = widthScreen - 75
+    y = 40
+    width = 40
+    height = 38 
+    pressed = False
+    return PauseGame(width, height, x, y, pressed)
+
+
+def createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
+    global currentLeaderboard
+
+    text = ''
+    text = ''
+    text1 = ''
+    text2 = ''
+    numText = 0
+    makeText = None
+    makeTextRect = None
+    white = (255, 255, 255)
+    yellow = (255, 255, 0)
+    blue = (0,191,255)
+    red = (255, 0, 0)
+
+    
+    head = "Highest Scores are recorded"
+    head1 = "Left Score is Doraemon"
+    head2 = "Right Score is Shin-Chan"
+    
+    makeHead = font.render(head, True, red)
+    makeHeadRect = makeHead.get_rect()
+    makeHeadRect.center = (widthScreen//2, 60)
+    
+    makeHead1 = font.render(head1, True, blue)
+    makeHeadRect1 = makeHead1.get_rect()
+    makeHeadRect1.center = (widthScreen//2, 100)
+
+    makeHead2 = font.render(head2, True, yellow)
+    makeHeadRect2 = makeHead2.get_rect()
+    makeHeadRect2.center = (widthScreen//2, 140)
+
+    if len(currentLeaderboard) == 0:
+        text = "No games played yet"
+        makeText = font.render(text, True, white)
+        makeTextRect = makeText.get_rect()
+        makeTextRect.center = (widthScreen//2, heightScreen//2)
+
+    elif len(currentLeaderboard) == 1:
+        text = "Best Score: " + str(currentLeaderboard[0])
+        makeText = font.render(text, True, white)
+        makeTextRect = makeText.get_rect()
+        makeTextRect.center = (widthScreen//2 - 15, heightScreen//2 - 15)
+        numText = 1
+
+    elif len(currentLeaderboard) == 2:
+        text = "Best Score: " + str(currentLeaderboard[0])
+        text1 = "Second Best Score: " + str(currentLeaderboard[1])
+
+        makeText = font.render(text, True, white)
+        makeTextRect = makeText.get_rect()
+        makeTextRect.center = (widthScreen//2 - 10 , heightScreen//2 - 25)
+
+        makeText1 = font.render(text1, True, white)
+        makeTextRect1 = makeText.get_rect()
+        makeTextRect1.center = (widthScreen//2 - 75, heightScreen//2 + 20)
+
+        numText = 2
+
+    elif len(currentLeaderboard) >= 3:
+        text ="Best Score: " + str(currentLeaderboard[0])
+        text1 = "Second Best Score: " + str(currentLeaderboard[1])
+        text2 = "Third Best Score: " + str(currentLeaderboard[2])
+
+        makeText = font.render(text, True, white)
+        makeTextRect = makeText.get_rect()
+        makeTextRect.center = (widthScreen//2 - 20, heightScreen//2 - 50)
+
+        makeText1 = font.render(text1, True, white)
+        makeTextRect1 = makeText.get_rect()
+        makeTextRect1.center = (widthScreen//2 - 75, heightScreen//2)
+
+        makeText2 = font.render(text2, True, white)
+        makeTextRect2 = makeText2.get_rect()
+        makeTextRect2.center = (widthScreen//2, heightScreen//2 + 50)
+        numText = 3
+
+    background = pygame.image.load("Instructions.jpg")
+
+    backButton = createBacktoIntroButton()
+
+    topLeft = (0, 0)
+
+    leaderboardDisplay = True
+
+    while leaderboardDisplay:
+
+        for event in pygame.event.get():
+            mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+            backButton.overButton(mouseCoordX, mouseCoordY)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                backButton.pressedButton(mouseCoordX, mouseCoordY)
+
+            if event.type == pygame.QUIT:
+                instructionsDisplay = False
+                pygame.quit() 
+                os._exit(0)
+
+
+        if backButton.pressed:
+            instructionsDisplay = False
+            mainMenuAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
+        
+        screen.blit(background, topLeft)
+
+        if numText == 0 or numText == 1:
+            screen.blit(makeText, makeTextRect)
+
+        elif numText == 2:
+            screen.blit(makeText, makeTextRect)
+            screen.blit(makeText1, makeTextRect1)
+
+        elif numText == 3:
+            screen.blit(makeText, makeTextRect)
+            screen.blit(makeText1, makeTextRect1)
+            screen.blit(makeText2, makeTextRect2)
+
+        screen.blit(makeHead, makeHeadRect)
+        screen.blit(makeHead2, makeHeadRect2)
+        screen.blit(makeHead1, makeHeadRect1)
+        backButton.displayButton(screen)
+        pygame.display.flip()
+
+
+#create the instructions screen
+def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
+    global superJumpImg
+    global runFastImg
+
+    black = (0, 0, 0)
+    white = (255, 255, 255)
+    green = (0, 255, 0)
+    yellow = (255, 255, 0)
+    blue = (0,191,255)
+    red = (255, 0, 0)
+    coral = (255,127,80)
+
+    instructions = "Score 7 goals to win!" 
+    instructionsText = font.render(instructions, True, white)
+    instructionsRect = instructionsText.get_rect()
+    instructionsRect.center = (200, 50)
+
+    powers = '3 Powers Available'
+    powersText = font.render(powers, True, red)
+    powersRect = instructionsText.get_rect()
+    powersRect.center = (widthScreen // 2, 80)
+
+    extraSpeed = 'ExtraSpeed'
+    extraSpeedText = font.render(extraSpeed, True, yellow)
+    extraSpeedRect = extraSpeedText.get_rect()
+    extraSpeedRect.center = (widthScreen // 2 - 400, 140)
+
+    frozen = 'Freeze opponent'
+    frozenText = font.render(frozen, True, blue)
+    frozenRect = frozenText.get_rect()
+    frozenRect.center = (widthScreen // 2 - 15, 140)
+
+    superJump = 'SuperJump'
+    superJumpText = font.render(superJump, True, coral)
+    superJumpRect = frozenText.get_rect()
+    superJumpRect.center = (widthScreen // 2 + 440, 140)
+
+    superJumpD = 'Increases jump'
+    superJumpDText = font.render(superJumpD, True, white)
+    superJumpDRect = superJumpDText.get_rect()
+    superJumpDRect.center = (widthScreen // 2 + 400, 260)
+
+    superJumpD1 = 'by 0.50'
+    superJumpD1Text = font.render(superJumpD1, True, white)
+    superJumpD1Rect = superJumpD1Text.get_rect()
+    superJumpD1Rect.center = (widthScreen // 2 + 400, 310)
+
+    instructionsScreen = pygame.display.set_mode((widthScreen, heightScreen))
+    instructionsScreenBackgroundImg = pygame.image.load("Instructions.jpg")
+    instructionsDisplay = True
+
+    frozen1 = 'Score 3 more goals'
+    frozenText1 = font.render(frozen1, True, white)
+    frozenText1Rect = frozenText1.get_rect()
+    frozenText1Rect.center = (widthScreen//2 - 15, 200)
+
+    frozen2 = 'than your opponnent.'
+    frozenText2 = font.render(frozen2, True, white)
+    frozenText2Rect = frozenText2.get_rect()
+    frozenText2Rect.center = (widthScreen//2 - 15, 240)
+
+    frozen3 = 'Only applicable once.'
+    frozenText3 = font.render(frozen3, True, white)
+    frozenText3Rect = frozenText3.get_rect()
+    frozenText3Rect.center = (widthScreen//2 - 15, 300)
+
+    speed1 = 'Increases speed'
+    speed1Text = font.render(speed1, True, white)
+    speed1TextRect = speed1Text.get_rect()
+    speed1TextRect.center = (widthScreen//2 - 400, 250)
+
+    speed2 = 'by 0.25'
+    speed2Text = font.render(speed2, True, white)
+    speed2TextRect = speed2Text.get_rect()
+    speed2TextRect.center = (widthScreen//2 - 415, 290)
+
+    backButton = createBacktoIntroButton()
+
+    while instructionsDisplay:
+        #to quit out of the screen
+        for event in pygame.event.get():
+            mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+            backButton.overButton(mouseCoordX, mouseCoordY)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                backButton.pressedButton(mouseCoordX, mouseCoordY)
+
+            if event.type == pygame.QUIT:
+                instructionsDisplay = False
+                pygame.quit() 
+                os._exit(0)
+
+
+        if backButton.pressed:
+            instructionsDisplay = False
+            mainMenuAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
+            
+        instructionsScreen.blit((instructionsScreenBackgroundImg), (0,0))
+        screen.blit(instructionsText, instructionsRect)
+        screen.blit(powersText, powersRect)
+        screen.blit(extraSpeedText, extraSpeedRect)
+        screen.blit(frozenText, frozenRect)
+        screen.blit(superJumpText, superJumpRect)
+        screen.blit(superJumpImg, (widthScreen // 2 + 387, 180))
+        screen.blit(runFastImg, ((widthScreen // 2 - 425, 170)))
+        screen.blit(superJumpDText, superJumpDRect)
+        screen.blit(superJumpD1Text, superJumpD1Rect)
+        screen.blit(frozenText1, frozenText1Rect)
+        screen.blit(frozenText2, frozenText2Rect)
+        screen.blit(frozenText3, frozenText3Rect)
+        screen.blit(speed1Text, speed1TextRect)
+        screen.blit(speed2Text, speed2TextRect)
+        backButton.displayButton(screen)
+        pygame.display.flip()
+
+#create the pause menu
+def createPauseMenu(screen):
+    global widthScreen
+    blue = (102, 178, 255)
+    rectWidth = 400
+    rectHeight = 125
+    rectX = widthScreen//2 - 175
+    rectY = heightScreen//2 - rectHeight//2 + 125
+
+    pygame.draw.rect(screen, blue, (rectX, rectY, rectWidth, rectHeight))
+
+
 
 ##############################################
 #This function displays the first screen######
 ##############################################
-def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg):
+def mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
+    global time
+
     introScreen = pygame.display.set_mode((widthScreen, heightScreen))
     firstDisplay = True
-    introBackgroundImg = pygame.image.load("Intro Background.jpg")
-    textIntro = font.render('Welcome to Shin-Dor Soccer', True, green, blue)
+    introBackgroundImg = pygame.image.load("BrickWall.jpg")
+    textIntro = font.render('Welcome to Shin-Dor Soccer', True, black, blue)
     textIntroRectangle = textIntro.get_rect()
     textIntroRectangle.center = (widthScreen//2, heightScreen//2)
     mixer.music.load("Intro Audio.mp3")
     mixer.music.play(-1)
+    startInstructions.pressed = False
     #Initial Screen Loop
     while firstDisplay:
+
         #check if the user presses the button
         for event in pygame.event.get():
 
-            if(event.type == pygame.MOUSEBUTTONDOWN):
-                mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
-
-                startPlaying2PlayerButton.pressedButton(mouseCoordX, mouseCoordY)
-                startPlayingAIButton.pressedButton(mouseCoordX, mouseCoordY)
-
-        if startPlayingAIButton.pressed:
-            mixer.music.pause()
-            firstDisplay = False
-            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth)
-
-        if startPlaying2PlayerButton.pressed:
-            mixer.music.pause()
-            firstDisplay = False
-            #if the button is pressed we are done with the first display
-
-
-        for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 firstDisplay = False
                 pygame.quit() 
                 os._exit(0)
+
+            mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+
+            startPlaying2PlayerButton.overButton(mouseCoordX, mouseCoordY)
+            startPlayingAIButton.overButton(mouseCoordX, mouseCoordY)
+            startInstructions.overButton(mouseCoordX, mouseCoordY)
+            leaderboardButton.overButton(mouseCoordX, mouseCoordY)
+
+            if(event.type == pygame.MOUSEBUTTONDOWN):
+
+                startPlaying2PlayerButton.pressedButton(mouseCoordX, mouseCoordY)
+                startPlayingAIButton.pressedButton(mouseCoordX, mouseCoordY)
+                startInstructions.pressedButton(mouseCoordX, mouseCoordY)
+                leaderboardButton.pressedButton(mouseCoordX, mouseCoordY)
+
+        if startPlayingAIButton.pressed:
+            mixer.music.pause()
+            firstDisplay = False
+            startPlayingAIButton.pressed = False
+            player.frozen = False
+            guestPlayer.frozen = False
+            guestPlayer.extraSpeed = 0
+            player.extraSpeed = 0
+            player.jumpHeightSecure = 8.5
+            player.jumpHeight = 8.5
+            guestPlayer.jumpHeightSecure = 8
+            guestPlayer.jumpHeight = 8
+            time = 0
+            createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer)
+
+        if startPlaying2PlayerButton.pressed:
+            mixer.music.pause()
+            firstDisplay = False
+            startPlaying2PlayerButton.pressed = False
+            player.frozen = False
+            guestPlayer.frozen = False
+            guestPlayer.extraSpeed = 0
+            player.extraSpeed = 0
+            player.jumpHeightSecure = 8.5
+            player.jumpHeight = 8.5
+            guestPlayer.jumpHeight = 8
+            guestPlayer.jumpHeightSecure = 8
+            time = 0
+            twoPlayerScreen()
+            #if the button is pressed we are done with the first display
+
+        if startInstructions.pressed:
+            firstDisplay = False
+            createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
+
+        if leaderboardButton.pressed:
+            leaderboardButton.pressed = False
+            firstDisplay = False
+            createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
         ################################
         #display of intro screen########
         ################################
 
-        introScreen = pygame.display.set_mode((widthScreen, heightScreen))
         introScreen.blit((introBackgroundImg), (0,0))
         introScreen.blit(shinChanIntroImg, (17, 125))
         introScreen.blit(doraemonIntroImg, (725, 100))
@@ -765,11 +1438,94 @@ def firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, s
         introScreen.blit(textIntro, textIntroRectangle)
         startPlaying2PlayerButton.displayButton(introScreen)
         startPlayingAIButton.displayButton(introScreen)
+        startInstructions.displayButton(introScreen)
+        leaderboardButton.displayButton(introScreen)
+        pygame.display.flip()
+
+#we create this screen so that the music will not restart playing after hitting the go back to main screen after instructions
+def mainMenuAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
+
+    introScreen = pygame.display.set_mode((widthScreen, heightScreen))
+    firstDisplay = True
+    introBackgroundImg = pygame.image.load("BrickWall.jpg")
+    textIntro = font.render('Welcome to Shin-Dor Soccer', True, black, blue)
+    textIntroRectangle = textIntro.get_rect()
+    textIntroRectangle.center = (widthScreen//2, heightScreen//2)
+    startInstructions.pressed = False
+    #Initial Screen Loop
+    while firstDisplay:
+
+        #check if the user presses the button
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                firstDisplay = False
+                pygame.quit() 
+                os._exit(0)
+
+            mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+
+            startPlaying2PlayerButton.overButton(mouseCoordX, mouseCoordY)
+            startPlayingAIButton.overButton(mouseCoordX, mouseCoordY)
+            startInstructions.overButton(mouseCoordX, mouseCoordY)
+            leaderboardButton.overButton(mouseCoordX, mouseCoordY)
+
+            if(event.type == pygame.MOUSEBUTTONDOWN):
+
+                startPlaying2PlayerButton.pressedButton(mouseCoordX, mouseCoordY)
+                startPlayingAIButton.pressedButton(mouseCoordX, mouseCoordY)
+                startInstructions.pressedButton(mouseCoordX, mouseCoordY)
+                leaderboardButton.pressedButton(mouseCoordX, mouseCoordY)
+
+        if startPlayingAIButton.pressed:
+            mixer.music.pause()
+            firstDisplay = False
+            startPlayingAIButton.pressed = False
+            player.frozen = False
+            guestPlayer.frozen = False
+            guestPlayer.extraSpeed = 0
+            player.extraSpeed = 0
+            player.jumpHeightSecure = 8.5
+            player.jumpHeight = 8.5
+            guestPlayer.jumpHeightSecure = 8
+            guestPlayer.jumpHeight = 8
+            time = 0
+            createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer)
+            
+        if startPlaying2PlayerButton.pressed:
+            mixer.music.pause()
+            firstDisplay = False
+            startPlaying2PlayerButton.pressed = False
+            twoPlayerScreen()
+            #if the button is pressed we are done with the first display
+
+        if startInstructions.pressed:
+            firstDisplay = False
+            createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
+
+        if leaderboardButton.pressed:
+            leaderboardButton.pressed = False
+            firstDisplay = False
+            createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
+        ################################
+        #display of intro screen########
+        ################################
+
+        introScreen.blit((introBackgroundImg), (0,0))
+        introScreen.blit(shinChanIntroImg, (17, 125))
+        introScreen.blit(doraemonIntroImg, (725, 100))
+        introScreen.blit(soccerIntroImg, (450, 20))
+        introScreen.blit(textIntro, textIntroRectangle)
+        startPlaying2PlayerButton.displayButton(introScreen)
+        startPlayingAIButton.displayButton(introScreen)
+        startInstructions.displayButton(introScreen)
+        leaderboardButton.displayButton(introScreen)
         pygame.display.flip()
 
 ###################################################################
 ############ CODE AI PROJECT STARTS HERE ##########################
 ###################################################################
+
 #basic intelligence will only move based on the soccer position
 def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
     #first the AI should go towards the soccer
@@ -819,7 +1575,7 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
             cpu.x += 5
         
         #if the ball is right above the CPU make it jump
-        if (soccer.x - (cpu.x + cpu.width) < 0 and soccer.x - (cpu.x + cpu.width) > -81) and abs(cpu.y - (soccer.y + soccer.height)) < 10:
+        if (soccer.x - (cpu.x + cpu.width) < 0 and soccer.x - (cpu.x + cpu.width) > -81) and abs(cpu.y - (soccer.y + soccer.height)) < 10 and (soccer.x - (widthScreen - goalWidth) <= 400):
             cpu.jump(soccer)
         #check if the other player hits the ball and go backwards if so
         if soccer.BDX >= 5*math.cos(50) and soccer.x >= widthScreen//2 + 100:
@@ -855,6 +1611,7 @@ def applyBasicIntelligence(cpu, soccer, widthScreen, goalWidth):
                 cpu.x += 2
 
 #medium level AI
+#similar to simple but with some more conditions
 def mediumAI(cpu, soccer, widthScreen, goalWidth):
        #first the AI should go towards the soccer
     epsilon = 10**-2
@@ -944,88 +1701,180 @@ def mediumAI(cpu, soccer, widthScreen, goalWidth):
         if cpu.jumpHeight + cpu.y <= soccer.y + soccer.height or cpu.jumping and soccer.y + soccer.width <= cpu.y:
             cpu.jump(soccer)
             cpu.x += (2 + cpu.extraSpeed)
-
-#this function uses Pythagoran Theorem to calculate the hypotenuse of a triangle
-def hypotenuse(x, y):
-    return math.sqrt(x**2 + y**2)
-
-#convert from degree to radian
-def radian(angle):
-    return angle * (math.pi/180)
     
 #Create the screen that will be popped if we select "Single Player"
-def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth):
+def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer):
     global jumpImgShowing
     global yJumpImg
     global timeFrozen
     global time
+    global gameOver
+    global timeWonGame
+    global score
+    global scoreList
+    global speedImgShowing
+    global jumpImgShowing
+    global AIlevel
+    global pauseButton
+    global pauseImg
+    global pauseGame
+    global quitButton
+    global xImg
+    global restartButton
+    global restartImg
 
     singlePlayerScreen = True
 
     while singlePlayerScreen:
-        time += 1
-
-        clock.tick(1000)
-
         
-        #apply the jumpImage powerup if it is showing
-        if jumpImgShowing and yJumpImg < heightScreen - 30:
-            yJumpImg += 5
+        if player.y + player.height > heightScreen:
+            player.y = heightScreen - player.height
 
-        #check if the image has hit ground and check if any player gets the jump icon
-        elif (((player.x + player.width > xJumpImg + 15 and player.x < xJumpImg) or
-        (player.x < xJumpImg - 15 and player.x + player.width > xJumpImg + 30)) and player.y + player.height >= 560 and
-        jumpImgShowing and player.jumpHeightSecure != 9.5 and not player.jumping):
-            yJumpImg = 30
-            jumpImgShowing = False
-            player.jumpHeight += 0.5
-            player.jumpHeightSecure += 0.5
+        if pauseButton.pressed:
+            pauseGame = not pauseGame
+            pauseButton.pressed = False
 
-        #check for the other player
-        elif(((guestPlayer.x + guestPlayer.width > xJumpImg + 15 and guestPlayer.x < xJumpImg) or
-        (guestPlayer.x < xJumpImg - 15 and guestPlayer.x + guestPlayer.width > xJumpImg + 30)) and guestPlayer.y + player.height >= 560 and
-        jumpImgShowing and guestPlayer.jumpHeightSecure != 9.5 and not guestPlayer.jumping):
-            yJumpImg = 30
-            jumpImgShowing = False
-            guestPlayer.jumpHeight += 0.5
-            guestPlayer.jumpHeightSecure += 0.5
+        if not pauseGame:
 
+            time += 1
 
-        #the following code is applied to the freeze power
-        #this power can only be achieved once since it is supreme and will pretty much allow you a free goal
-        #if a player is winning by 3 goals the other player is frozen for a decent amount of seconds
-        possibleTimeFrozen = applyPowers(player, guestPlayer, time, superJumpImg, screen, xJumpImg, yJumpImg)
-        if isinstance(possibleTimeFrozen, int):
-            timeFrozen = possibleTimeFrozen
-        
-        if isinstance(timeFrozen, int) and (time - timeFrozen) == 150:
-            player.frozen = False
-            guestPlayer.frozen = False
-            beenFreezed = True
-
-        applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
-
-        checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
-
-        keyPressed = pygame.key.get_pressed()
-        #this makes sure the player can move continously so that we do not have to press the key multiple times
-        if not player.frozen:
-
-            if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
-                player.x += 10     
-                player.rectangleX = player.x
-        
-        
-            if keyPressed[pygame.K_LEFT] and player.x >= goalWidth - player.width + 20:         #the purpose of the and is to ensure the player does not go outside of the left bound
-                player.x -= 10                       #0.15
-                player.rectangleX = player.x
+            clock.tick(1000)
             
-            if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
-                player.jumping = True
+            #stop the game when a player scores 7 goals
+            #create our score string for the leaderBoard
+            if gameOver:
+                guestPlayer.y = heightScreen - guestPlayer.height
+                player.y = heightScreen - player.height
+                lose_Sound = mixer.Sound("Sad Violin Airhorn.mp3")
+                win_Sound = mixer.Sound("Winning Sound.mp3")
+                if guestPlayer.goalCount == 3:
+                    lose_Sound.play()
+                elif player.goalCount == 3:
+                    win_Sound.play()
+
+                gameOver = False
+                scoreList = [guestPlayer.goalCount, player.goalCount]
+                score = str(scoreList[0]) + "-" + str(scoreList[1])
+                player.frozen = False
+                guestPlayer.frozen = False
+                speedImgShowing = False
+                jumpImgShowing = False
+                player.jumping = False
+                guestPlayer.jumping = False
+                
+                soccer.BDY = 0
+                soccer.BDX = 0
+                player.x = widthScreen - goalWidth - player.width
+                guestPlayer.x = goalWidth + guestPlayer.width/2
+                player.goalCount = 0
+                guestPlayer.goalCount = 0
+                guestPlayer.extraSpeed = 0
+                player.extraSpeed = 0
+                player.jumpHeightSecure = 8.5
+                player.jumpHeight = 8.5
+                guestPlayer.jumpHeightSecure = 8
+                guestPlayer.jumpHeight = 8
+                soccer.x = widthScreen//2
+                soccer.y = heightScreen//2 - 20
+
+
+                pygame.time.wait(5000)
+                lose_Sound.stop()
+                fillLeaderboard()
+                
+                mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
+            #check if one of the players has reached the maximum score allowed
+            if (player.goalCount == 3 or guestPlayer.goalCount == 3) and not gameOver:
+                gameOver = True
+                timeWonGame = time
+                player.frozen = True
+                guestPlayer.frozen = True
+            #to make sure when our playing is jumping and is frozen it does not stay in the air
+            if player.frozen:
+                player.y = heightScreen - player.height
+
+            elif guestPlayer.frozen:
+                guestPlayer.y = heightScreen - guestPlayer.height
+
+
+            #check if the image has hit ground and check if any player gets the jump icon
+            if (((player.y >= yJumpImg and player.y < yJumpImg + jumpImgHeight) or (player.y + player.height >= yJumpImg and player.y + player.height < yJumpImg + jumpImgHeight) or
+            (player.y + player.height >= yJumpImg and player.y <= yJumpImg))
+            and ((player.x + player.width > xJumpImg + 15 and player.x < xJumpImg) or
+            (player.x < xJumpImg - 15 and player.x + player.width > xJumpImg + 30)) and
+            jumpImgShowing and player.jumpHeightSecure != 9) and not incrementJumpPlayer:
+                incrementJumpPlayer = True
+                yJumpImg = 30
+                jumpImgShowing = False
+
+            #check for the other player
+            elif (((guestPlayer.y >= yJumpImg and guestPlayer.y < yJumpImg + jumpImgHeight) or (guestPlayer.y + guestPlayer.height >= yJumpImg and guestPlayer.y + guestPlayer.height < yJumpImg + jumpImgHeight) or
+            (guestPlayer.y + guestPlayer.height >= yJumpImg and guestPlayer.y <= yJumpImg))
+            and ((guestPlayer.x + guestPlayer.width > xJumpImg + 15 and guestPlayer.x < xJumpImg) or
+            (guestPlayer.x < xJumpImg - 15 and guestPlayer.x + guestPlayer.width > xJumpImg + 30)) and
+            jumpImgShowing and player.jumpHeightSecure != 9) and not incrementJumpGuestPlayer:
+                incrementJumpGuestPlayer = True
+                yJumpImg = 30
+                jumpImgShowing = False
+
+            #apply the jumpImage powerup if it is showing
+            elif jumpImgShowing and yJumpImg < heightScreen - 30:
+                yJumpImg += 5
+
+            elif yJumpImg == heightScreen - 30:
+                jumpImgShowing = False
+                yJumpImg = 30
+                xJumpImg = random.randint(widthScreen//2 - 300, widthScreen//2 + 300)
+
+            #now add the extra jumpheight if a player got it
+
+            if incrementJumpPlayer and not player.jumping:
+                incrementJumpPlayer = False
+                player.jumpHeight += 0.5
+                player.jumpHeightSecure += 0.5
+
+            elif incrementJumpGuestPlayer and not guestPlayer.jumping:
+                incrementJumpGuestPlayer = False
+                guestPlayer.jumpHeight += 0.5
+                guestPlayer.jumpHeightSecure += 0.5
+
+            #the following code is applied to the freeze power
+            #this power can only be achieved once since it is supreme and will pretty much allow you a free goal
+            #if a player is winning by 3 goals the other player is frozen for a decent amount of seconds
+            possibleTimeFrozen = applyPowers(player, guestPlayer, time, superJumpImg, screen, xJumpImg, yJumpImg)
+            if isinstance(possibleTimeFrozen, int):
+                timeFrozen = possibleTimeFrozen
+            
+            if isinstance(timeFrozen, int) and (time - timeFrozen) == 150:
+                player.frozen = False
+                guestPlayer.frozen = False
+                beenFreezed = True
+
+            if AIlevel == "Easy":
                 applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
+            if AIlevel == "Medium":
+                mediumAI(guestPlayer, soccer, widthScreen, goalWidth)
+
+            checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
+
+            keyPressed = pygame.key.get_pressed()
+            #this makes sure the player can move continously so that we do not have to press the key multiple times
+            if not player.frozen:
+
+                if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
+                    player.x += 6     
+                    player.rectangleX = player.x
             
-            if player.jumping:
-                player.jump(soccer)
+            
+                if keyPressed[pygame.K_LEFT] and player.x >= goalWidth - player.width + 20:         #the purpose of the and is to ensure the player does not go outside of the left bound
+                    player.x -= 6                      #0.15
+                    player.rectangleX = player.x
+                
+                if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
+                    player.jumping = True
+                
+                if player.jumping:
+                    player.jump(soccer)
                 #make sure we check for all our collisions and goals, etc
 
         #make sure the user can exit out of the game by pressing the top left exit button
@@ -1034,21 +1883,21 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 singlePlayerScreen = False
                 pygame.quit()  	# ensures pygame module closes properly
                 os._exit(0)	    # ensure the window closes
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+
+                (mouseX, mouseY) = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+
+                pauseButton.pressedPause(mouseX, mouseY)
+                quitButton.pressedPause(mouseX, mouseY)
+                playButton.pressedPause(mouseX, mouseY)
+                restartButton.pressedPause(mouseX, mouseY)
         
 
         #proceed to load the screen 
         screen.blit(pygame.image.load("Head Soccer Background Dani Edited.png"), (0,0))
         black = (0,0,0)
         green = (0, 255, 0)
-        #rectangle for debugging purposes
-        #rectangle of player1 and ellipse
-        pygame.draw.rect(screen, black,(player.x + 18, player.y + 25, player.width - 38, player.height  - 28),5)
-        pygame.draw.ellipse(screen, green, (player.x + 7, player.y + 5, player.width - 16, player.height - 55), 4)
-
-        #rectangle of guestPlayer and ellipse
-        pygame.draw.rect(screen, black, (guestPlayer.x + 6, guestPlayer.y + 50, guestPlayer.width - 23, guestPlayer.height - 47), 5)
-        pygame.draw.ellipse(screen, green, (guestPlayer.x - 5, guestPlayer.y - 5, guestPlayer.width + 2 , guestPlayer.height - 35), 4)
-        ######################################
 
         ##############################################
         #The following lines update the current position of the objects
@@ -1058,6 +1907,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         screen.blit(guestPlayerImg, (guestPlayer.x, guestPlayer.y))
         screen.blit(goalLeftImg, (0, heightScreen - goalHeight))
         screen.blit(goalRightImg, (widthScreen - goalWidth, heightScreen - goalHeight))
+        screen.blit(pauseImg, (pauseButton.x, pauseButton.y))
         createGoalCount(player, guestPlayer, screen, widthScreen)
     
         if jumpImgShowing:
@@ -1065,9 +1915,150 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
     
         if speedImgShowing:
             screen.blit(runFastImg, (speedX, speedY))
+
+        if guestPlayer.y + guestPlayer.height > heightScreen:
+            guestPlayer.y = heightScreen - guestPlayer.height
+        
+        #create confetti
+        if gameOver:
+            colorsDoraemon = [(102, 178, 255), (255, 255, 255)]
+            colorsShinChan = [(255,0,0), (255, 255, 0)]
+            for circle in range(3000):
+                if player.goalCount == 3:
+                    color = colorsShinChan[random.randint(0, len(colorsShinChan) - 1)]
+                else:
+                    color = colorsDoraemon[random.randint(0, len(colorsDoraemon) - 1)]
+                pygame.draw.circle(screen, color, ((random.randint(widthScreen//2 -400, widthScreen//2 + 450)), random.randint(heightScreen//2 , heightScreen//2 + 300)), 2)
+       
+        #pause part of the code
+        if pauseGame:
+
+            paused = "Paused Game"
+            pausedText = font.render(paused, True, (0, 0, 0))
+            pausedTextRect = pausedText.get_rect()
+            pausedTextRect.center = (575, 400)
+            
+            createPauseMenu(screen)
+            screen.blit(pausedText, pausedTextRect)
+
+            if pauseButton.pressed:
+                pauseGame = not pauseGame
+                pauseButton.pressed = False
+
+            #resume the playing
+            if playButton.pressed:
+                pauseGame = not pauseGame
+                playButton.pressed = False
+            
+            #restart the game from 0-0
+            if restartButton.pressed:
+                soccer.BDY = 0
+                soccer.BDX = 0
+                player.x = widthScreen - goalWidth - player.width
+                guestPlayer.x = goalWidth + guestPlayer.width/2
+                player.goalCount = 0
+                guestPlayer.goalCount = 0
+                guestPlayer.extraSpeed = 0
+                player.extraSpeed = 0
+                player.jumpHeightSecure = 8.5
+                player.jumpHeight = 8.5
+                guestPlayer.jumpHeightSecure = 8
+                guestPlayer.jumpHeight = 8
+                soccer.x = widthScreen//2
+                soccer.y = heightScreen//2 - 20
+                speedImgShowing = False
+                jumpImgShowing = False
+                restartButton.pressed = False
+                pauseGame = not pauseGame
+
+            #quit the game
+            if quitButton.pressed:
+                pauseGame = not pauseGame
+                quitButton.pressed = False
+                guestPlayer.goalCount = 0
+                player.goalCount = 0
+                player.frozen = False
+                guestPlayer.frozen = False
+                speedImgShowing = False
+                jumpImgShowing = False
+                player.jumping = False
+                soccer.BDY = 0
+                soccer.BDX = 0
+                player.x = widthScreen - goalWidth - player.width
+                guestPlayer.x = goalWidth + guestPlayer.width/2
+                player.goalCount = 0
+                guestPlayer.goalCount = 0
+                guestPlayer.extraSpeed = 0
+                player.extraSpeed = 0
+                player.jumpHeightSecure = 8.5
+                player.jumpHeight = 8.5
+                guestPlayer.jumpHeightSecure = 8
+                guestPlayer.jumpHeight = 8
+                soccer.x = widthScreen//2
+                soccer.y = heightScreen//2 - 20
+                guestPlayer.jumping = False
+
+                mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
+
+            screen.blit(xImg, (widthScreen//2 - 85, heightScreen//2 + 137))
+            screen.blit(playImg, (widthScreen//2, heightScreen//2 + 135))
+            screen.blit(restartImg, (widthScreen//2 + 85, heightScreen//2 + 135))
     
         pygame.display.flip()
 
+#screen where the user will be able to choose what level to play agains
+def createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer):
+    global AIlevel
+    global easyButton
+    global mediumButton
+
+    introBackgroundImg = pygame.image.load("Instructions.jpg")
+    topLeft = (0, 0)
+    white = (255, 255, 255)
+    
+    levelScreen = pygame.display.set_mode((widthScreen, heightScreen))
+    createLevels = True
+
+    text = "Pick the level of difficulty"
+    makeText = font.render(text, True, white)
+    makeTextRect = makeText.get_rect()
+    makeTextRect.center = (widthScreen//2, 100)
+
+    while createLevels:
+
+        for event in pygame.event.get():
+            mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+            easyButton.overButton(mouseCoordX, mouseCoordY)
+            mediumButton.overButton(mouseCoordX, mouseCoordY)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                easyButton.pressedButton(mouseCoordX, mouseCoordY)
+                mediumButton.pressedButton(mouseCoordX, mouseCoordY)
+
+            if event.type == pygame.QUIT:
+                createLevels = False
+                pygame.quit() 
+                os._exit(0)
+
+
+        if easyButton.pressed:
+            AIlevel = "Easy"
+            easyButton.pressed = False
+            createLevels = False
+            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
+
+        if mediumButton.pressed:
+            AIlevel = "Medium"
+            mediumButton.pressed = False
+            createLevels = False
+            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
+        
+        levelScreen.blit(introBackgroundImg, topLeft)
+        easyButton.displayButton(levelScreen)
+        mediumButton.displayButton(levelScreen)
+        levelScreen.blit(makeText, makeTextRect)
+        pygame.display.flip()
+    
 
 ##################################################
 #Keeps track of the number of goals of each player
@@ -1104,6 +2095,8 @@ def createWonScreen(heightScreen, widthScreen):
         
         wonScreen.blit(wonScreenBackground, wonScreenBackgroundTopLeft)
 
+
+        
 ##########################################
 ####### SUPER POWERS FUNCTIONS ###########
 ##########################################
@@ -1114,36 +2107,44 @@ def applyExtraSpeed(player, guestPlayer, time, screen):
     global heightScreen
     global speedX
     global speedY
-    #24, 40
-    if time % 300 == 0 and time != 0 and not speedImgShowing:
+
+    if time % 300 == 0 and time != 0 and not speedImgShowing and not (guestPlayer.extraSpeed == 1.5 and player.extraSpeed == 1.5):
         screen.blit(runFastImg,(speedX, speedY))
         speedImgShowing = True
 
-    elif speedImgShowing and speedY < heightScreen - 40:
-        speedY += 5
-
     #check if the image has hit ground and check if any player gets the jump icon
-    elif (((player.x + player.width > speedX + 12 and player.x < speedX) or 
-    (player.x < speedX - 12 and player.x - player.width > speedX + 24)) and player.y + player.height >= 560
-    and speedImgShowing and player.extraSpeed != 3 and not player.jumping):
+    elif (((player.y >= speedY and player.y < speedY + runFastHeight) or (player.y + player.height >= speedY and player.y + player.height < speedY + runFastHeight) or
+    (player.y + player.height >= speedY and player.y <= runFastHeight))
+    and ((player.x + player.width > speedX + 12 and player.x < speedX) or
+    (player.x < speedX - 12 and player.x + player.width > speedX + 24)) and
+    speedImgShowing and player.extraSpeed != 1.5):
         player.extraSpeed += 0.5
         speedY = 30
         speedImgShowing = False
 
     #check for the other player
-    elif (((guestPlayer.x + guestPlayer.width > speedX + 12 and guestPlayer.x < speedX) or 
-    (guestPlayer.x < speedX - 12 and guestPlayer.x - guestPlayer.width > speedX + 24)) and guestPlayer.y + guestPlayer.height >= 560
-    and speedImgShowing and guestPlayer.extraSpeed != 3 and not guestPlayer.jumping):
+    elif (((guestPlayer.y >= speedY and guestPlayer.y < speedY + runFastHeight) or (guestPlayer.y + guestPlayer.height >= speedY and guestPlayer.y + guestPlayer.height < speedY + runFastHeight) or
+    (guestPlayer.y + guestPlayer.height >= speedY and guestPlayer.y <= runFastHeight))
+    and ((guestPlayer.x + guestPlayer.width > speedX + 12 and guestPlayer.x < speedX) or
+    (guestPlayer.x < speedX - 12 and guestPlayer.x + guestPlayer.width > speedX + 24)) and
+    speedImgShowing and guestPlayer.extraSpeed != 1.5):
         guestPlayer.extraSpeed += 0.5
         speedY = 30
         speedImgShowing = False
+
+    elif speedImgShowing and speedY < heightScreen - 40:
+        speedY += 5
+
+    elif speedY == heightScreen - 40:
+        speedY = 30
+        speedImgShowing = False
+        speedX = random.randint(widthScreen//2 - 300, widthScreen//2 + 300)
 
 
 #applies super jump to the player who is hitting the ball more often, aka being more engaging
 def applySuperJump(player, guestPlayer, time, superJumpImg, screen, x, y):
     global jumpImgShowing
-    print("Hello")
-    if time % 500 == 0 and not jumpImgShowing and time != 0 and not jumpImgShowing:
+    if time % 200 == 0 and not jumpImgShowing and time != 0 and not player.jumpHeightSecure == 9 and not guestPlayer.jumpHeightSecure == 8.5:
         screen.blit(superJumpImg, (x,y))
         jumpImgShowing = True
 
@@ -1189,151 +2190,383 @@ def applyPowers(player, guestPlayer, time, superJumpImg, screen, x, y):
 
     return timeFrozen
 
-# from: https://www.cs.cmu.edu/~112/notes/notes-strings.html#basicFileIO
-def readFile(path):
-    with open(path, "rt") as f:
-        return f.read()
-
-#creates our leaderBoard
+#creates our leaderBoard with the best scores sorted in order of best to worst
 def fillLeaderboard():
-    fileName = 'Leaderboard.csv'
-    leaderBoard = readFile(fileName)
+    global score
+    global currentLeaderboard
+    global firstScoreInts
+    global compareScore
 
-###################################################
-###################################################
-############## MAIN GAME LOOP #####################
-###################################################
-###################################################
+    currentLeaderboard = []
+    fileL = readFile('Leaderboard')
+    saveScores = ""
+    #check if the length of the file is 0 and if so add the score
+    if len(fileL) == 0:
+        writeFile('Leaderboard', score)
+        currentLeaderboard.append(score)
+   
+    else:
+        #convert our file into a list containing all the scores. Ex: ['2-0', '2-1', '2-2']
+        for savedScore in fileL.split(","):
+            currentLeaderboard.append(savedScore)
 
+        for i in range(len(currentLeaderboard)):
+            compareScore = currentLeaderboard[i]
+            if len(score) != 0:
+                #we do not want to save the same score twice
+                if (int(compareScore[0]) == int(score[0]) and int(compareScore[2]) == int(score[2])):
+                    print("Scores are equal! \n \n")
+                    return
+                #check if the score is better than other scores
+                if abs(int(compareScore[0]) - int(compareScore[2])) < abs(int(score[0]) - int(score[2])):
+                    currentLeaderboard.insert(i, score)
+                    #to save the scores put them in a string
+                    for everyScore in currentLeaderboard:
+                        saveScores += everyScore + ","
+                    writeFile('Leaderboard', saveScores[0:len(saveScores) - 1])
+                    return
+
+        if len(score) != 0:    
+            #let's say our score was not greater than any of the previous but it was smaller.... we still add it
+            if abs(int(compareScore[0]) - int(compareScore[2])) > abs(int(score[0]) - int(score[2])):
+                currentLeaderboard.append(score)
+                #again, save all the scores in saveScores
+                for everyScore in currentLeaderboard:
+                    saveScores += everyScore + ","
+
+                #finally we can write all the scores into the file
+                writeFile('Leaderboard', saveScores[0:len(saveScores) - 1])
+
+#this function contains the code for the two player screen
+def twoPlayerScreen():
+    global player
+    global guestPlayer
+    global heightScreen
+    global widthScreen
+    global time
+    global yJumpImg
+    global xJumpImg
+    global incrementJumpPlayer
+    global jumpImgShowing
+    global incrementJumpGuestPlayer
+    global timeFrozen
+    global gameOver
+    global timeWonGame
+    global scoreList
+    global score
+    global speedImgShowing
+    global jumpImgShowing
+    global pauseButton
+    global pauseImg
+    global pauseGame
+    global quitButton
+    global xImg
+    global restartButton
+    global restartImg
+    global dorami
+    
+
+    time += 1
+    play = True
+
+    while play:
+        
+        if pauseButton.pressed:
+                pauseGame = not pauseGame
+                pauseButton.pressed = False
+
+        if not pauseGame:
+
+            time += 1
+
+            if player.frozen:
+                player.y = heightScreen - player.height
+
+            elif guestPlayer.frozen:
+                guestPlayer.y = heightScreen - guestPlayer.height
+
+            if gameOver:
+                # guestPlayer.y = heightScreen - guestPlayer.height
+                # player.y = heightScreen - player.height
+                lose_Sound = mixer.Sound("Sad Violin Airhorn.mp3")
+                win_Sound = mixer.Sound("Winning Sound.mp3")
+                if guestPlayer.goalCount == 2:
+                    lose_Sound.play()
+                elif player.goalCount == 2:
+                    win_Sound.play()
+                play = False
+                gameOver = False
+                scoreList = [guestPlayer.goalCount, player.goalCount]
+                score = str(scoreList[0]) + "-" + str(scoreList[1])
+                guestPlayer.goalCount = 0
+                player.goalCount = 0
+                player.frozen = False
+                guestPlayer.frozen = False
+                speedImgShowing = False
+                jumpImgShowing = False
+                player.jumping = False
+                guestPlayer.jumping = False
+                fillLeaderboard()
+                AIlevel = None
+                pygame.time.wait(5000)
+                lose_Sound.stop()
+                mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
+            #check if one of the players has reached the maximum score allowed
+            if (player.goalCount == 2 or guestPlayer.goalCount == 2) and not gameOver:
+                player.frozen = True
+                guestPlayer.frozen = True
+                gameOver = True
+                timeWonGame = time
+            #to make sure when our playing is jumping and is frozen it does not stay in the air
+            if player.frozen:
+                player.y = heightScreen - player.height
+
+            elif guestPlayer.frozen:
+                guestPlayer.y = heightScreen - guestPlayer.height
+
+            #check if the image has hit ground and check if any player gets the jump icon
+            if (((player.y >= yJumpImg and player.y < yJumpImg + jumpImgHeight) or (player.y + player.height >= yJumpImg and player.y + player.height < yJumpImg + jumpImgHeight) or
+            (player.y + player.height >= yJumpImg and player.y <= yJumpImg))
+            and ((player.x + player.width > xJumpImg + 15 and player.x < xJumpImg) or
+            (player.x < xJumpImg - 15 and player.x + player.width > xJumpImg + 30)) and
+            jumpImgShowing and player.jumpHeightSecure != 9) and not incrementJumpPlayer:
+                incrementJumpPlayer = True
+                yJumpImg = 30
+                jumpImgShowing = False
+
+            #check for the other player
+            elif (((guestPlayer.y >= yJumpImg and guestPlayer.y < yJumpImg + jumpImgHeight) or (guestPlayer.y + guestPlayer.height >= yJumpImg and guestPlayer.y + guestPlayer.height < yJumpImg + jumpImgHeight) or
+            (guestPlayer.y + guestPlayer.height >= yJumpImg and guestPlayer.y <= yJumpImg))
+            and ((guestPlayer.x + guestPlayer.width > xJumpImg + 15 and guestPlayer.x < xJumpImg) or
+            (guestPlayer.x < xJumpImg - 15 and guestPlayer.x + guestPlayer.width > xJumpImg + 30)) and
+            jumpImgShowing and guestPlayer.jumpHeightSecure != 8.5) and not incrementJumpGuestPlayer:
+                incrementJumpGuestPlayer = True
+                yJumpImg = 30
+                jumpImgShowing = False
+
+            #apply the jumpImage powerup if it is showing
+            elif jumpImgShowing and yJumpImg < heightScreen - 30:
+                yJumpImg += 5
+
+            elif yJumpImg == heightScreen - 30:
+                jumpImgShowing = False
+                yJumpImg = 30
+                xJumpImg = random.randint(widthScreen//2 - 300, widthScreen//2 + 300)
+
+            #now add the extra jumpheight if a player got it
+
+            if incrementJumpPlayer and not player.jumping:
+                incrementJumpPlayer = False
+                player.jumpHeight += 0.5
+                player.jumpHeightSecure += 0.5
+
+            elif incrementJumpGuestPlayer and not guestPlayer.jumping:
+                incrementJumpGuestPlayer = False
+                guestPlayer.jumpHeight += 0.5
+                guestPlayer.jumpHeightSecure += 0.5
+
+            #the following code is applied to the freeze power
+            #this power can only be achieved once since it is supreme and will pretty much allow you a free goal
+            #if a player is winning by 3 goals the other player is frozen for a decent amount of seconds
+            possibleTimeFrozen = applyPowers(player, guestPlayer, time, superJumpImg, screen, xJumpImg, yJumpImg)
+            if isinstance(possibleTimeFrozen, int):
+                timeFrozen = possibleTimeFrozen
+            
+            if isinstance(timeFrozen, int) and (time - timeFrozen) == 150:
+                player.frozen = False
+                guestPlayer.frozen = False
+                beenFreezed = True
+            
+
+            clock.tick(10000)
+            
+            keyPressed = pygame.key.get_pressed() #gets the key that it is being pressed
+
+            #this makes sure the player can move continously so that we do not have to press the key multiple times
+
+            if not player.frozen:
+
+                if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
+                    player.x += 6 + player.extraSpeed                 #0.15
+                    player.rectangleX = player.x
+                
+                if keyPressed[pygame.K_LEFT] and player.x >= goalWidth - player.width + 20:         #the purpose of the and is to ensure the player does not go outside of the left bound
+                    player.x -= abs(6 + player.extraSpeed)                   #0.15
+                    player.rectangleX = player.x
+                
+                if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
+                    player.jumping = True
+                
+                if player.jumping:
+                    player.jump(soccer)
+
+            #To move the guest player... 
+
+            if not guestPlayer.frozen:
+
+                if keyPressed[pygame.K_s] and guestPlayer.x + guestPlayer.width <= widthScreen - goalWidth + guestPlayer.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
+                    guestPlayer.x += 6 + guestPlayer.extraSpeed
+                
+                if keyPressed[pygame.K_a] and guestPlayer.x >= goalWidth - guestPlayer.width + 20:          #the purpose of this and is to ensure the player does not go outside of the left bound                                 
+                    guestPlayer.x -= 6 + guestPlayer.extraSpeed
+                
+                if not guestPlayer.jumping and keyPressed[pygame.K_SPACE]: 
+                    guestPlayer.jumping = True
+                
+                if guestPlayer.jumping:
+                    guestPlayer.jump(soccer)
+            
+
+            checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                play = False
+                pygame.quit()
+                os._exit(0)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                (mouseX, mouseY) = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+                pauseButton.pressedPause(mouseX, mouseY)
+                quitButton.pressedPause(mouseX, mouseY)
+                playButton.pressedPause(mouseX, mouseY)
+                restartButton.pressedPause(mouseX, mouseY)
+        
+        
+        #sets the background color of the display
+        screen.blit(pygame.image.load("Head Soccer Background Dani Edited.png"), (0,0))
+        ##############################################
+        #The following lines update the current position of the objects
+        ##############################################
+        screen.blit(soccerImg, (soccer.x, soccer.y))
+        screen.blit(playerImg, (player.x, player.y))
+        screen.blit(guestPlayerImg, (guestPlayer.x, guestPlayer.y))
+        screen.blit(goalLeftImg, (0, heightScreen - goalHeight))
+        screen.blit(goalRightImg, (widthScreen - goalWidth, heightScreen - goalHeight))
+        screen.blit(pauseImg, (pauseButton.x, pauseButton.y))
+        createGoalCount(player, guestPlayer, screen, widthScreen)
+
+        if jumpImgShowing:
+            screen.blit(superJumpImg, (xJumpImg, yJumpImg))
+        
+        if speedImgShowing:
+            screen.blit(runFastImg, (speedX, speedY))
+
+        #create the confetti
+        if gameOver:
+            colorsDoraemon = [(102, 178, 255), (255, 255, 255)]
+            colorsShinChan = [(255,0,0), (255, 255, 0)]
+            for circle in range(3000):
+                if player.goalCount == 2:
+                    color = colorsShinChan[random.randint(0, len(colorsShinChan) - 1)]
+                else:
+                    color = colorsDoraemon[random.randint(0, len(colorsDoraemon) - 1)]
+                pygame.draw.circle(screen, color, ((random.randint(widthScreen//2 -400, widthScreen//2 + 450)), random.randint(heightScreen//2 , heightScreen//2 + 300)), 2)
+
+        #pause part of the code
+        if pauseGame:
+
+            paused = "Paused Game"
+            pausedText = font.render(paused, True, (0, 0, 0))
+            pausedTextRect = pausedText.get_rect()
+            pausedTextRect.center = (575, 400)
+            
+            createPauseMenu(screen)
+            screen.blit(pausedText, pausedTextRect)
+
+            if pauseButton.pressed:
+                pauseGame = not pauseGame
+                pauseButton.pressed = False
+
+            #resume the playing
+            if playButton.pressed:
+                pauseGame = not pauseGame
+                playButton.pressed = False
+            
+            #restart the game from 0-0
+            if restartButton.pressed:
+                soccer.BDY = 0
+                soccer.BDX = 0
+                player.x = widthScreen - goalWidth - player.width
+                guestPlayer.x = goalWidth + guestPlayer.width/2
+                player.goalCount = 0
+                guestPlayer.goalCount = 0
+                guestPlayer.extraSpeed = 0
+                player.extraSpeed = 0
+                player.jumpHeightSecure = 8.5
+                player.jumpHeight = 8.5
+                guestPlayer.jumpHeightSecure = 8
+                guestPlayer.jumpHeight = 8
+                soccer.x = widthScreen//2
+                soccer.y = heightScreen//2 - 20
+                speedImgShowing = False
+                jumpImgShowing = False
+                restartButton.pressed = False
+                pauseGame = not pauseGame
+
+            #quit the game
+            if quitButton.pressed:
+                pauseGame = not pauseGame
+                quitButton.pressed = False
+                speedImgShowing = False
+                jumpImgShowing = False
+                soccer.BDY = 0
+                soccer.BDX = 0
+                player.x = widthScreen - goalWidth - player.width
+                guestPlayer.x = goalWidth + guestPlayer.width/2
+                player.goalCount = 0
+                guestPlayer.goalCount = 0
+                guestPlayer.extraSpeed = 0
+                player.extraSpeed = 0
+                player.jumpHeightSecure = 8.5
+                player.jumpHeight = 8.5
+                guestPlayer.jumpHeightSecure = 8
+                guestPlayer.jumpHeight = 8
+                soccer.x = widthScreen//2
+                soccer.y = heightScreen//2 - 20
+                mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
+
+            screen.blit(xImg, (widthScreen//2 - 85, heightScreen//2 + 137))
+            screen.blit(playImg, (widthScreen//2, heightScreen//2 + 135))
+            screen.blit(restartImg, (widthScreen//2 + 85, heightScreen//2 + 135))
+
+            
+
+        pygame.display.flip()
+    
+
+################################################
+################################################
+############  MAIN GAME LOOP AHEAD #############
+################################################
+################################################
+
+compareScore = 0
+timeWonGame = 0
 runPygame = True
-firstRun = True
+gameOver = False
+startPlaying2PlayerButton = createStartPlaying2PlayerButton()
+startPlayingAIButton = createButtonAI()
+startInstructions = createInstructionsButton()
+leaderboardButton = createLeaderboardButton()
+easyButton = createEasyButton()
+mediumButton = createMediumButton()
+
+widthQuit, heightQuit, xQuit, yQuit, pressedQuit = (35, 35, widthScreen//2 - 85, heightScreen//2 + 137, False)
+pauseButton = createPauseButton()
+quitButton = PauseGame(widthQuit, heightQuit, xQuit, yQuit, pressedQuit)
+
+widthPlay, heightPlay, xPlay, yPlay, pressedQuitPlay = (38, 38, widthScreen//2 , heightScreen//2 + 135, False)
+playButton = PauseGame(widthPlay, heightPlay, xPlay, yPlay, pressedQuitPlay)
+screen.blit(guestPlayerImg, (guestPlayer.x, guestPlayer.y))
+widthRe, heightRe, xRe, yRe, pressedRestart = (38, 38, widthScreen//2 + 85, heightScreen//2 + 135, False)
+restartButton = PauseGame(widthRe, heightRe, xRe, yRe, pressedRestart)
+
+AIlevel = None
+pauseGame = False
 
 while runPygame:
-    time += 1
-
-    #apply the jumpImage powerup if it is showing
-    if jumpImgShowing and yJumpImg < heightScreen - 30:
-        yJumpImg += 5
-
-    #check if the image has hit ground and check if any player gets the jump icon
-    elif (((player.x + player.width > xJumpImg + 15 and player.x < xJumpImg) or
-    (player.x < xJumpImg - 15 and player.x + player.width > xJumpImg + 30)) and player.y + player.height >= 560 and
-    jumpImgShowing and player.jumpHeightSecure != 9.5 and not player.jumping):
-        yJumpImg = 30
-        jumpImgShowing = False
-        player.jumpHeight += 0.5
-        player.jumpHeightSecure += 0.5
-
-    #check for the other player
-    elif(((guestPlayer.x + guestPlayer.width > xJumpImg + 15 and guestPlayer.x < xJumpImg) or
-    (guestPlayer.x < xJumpImg - 15 and guestPlayer.x + guestPlayer.width > xJumpImg + 30)) and guestPlayer.y + player.height >= 560 and
-    jumpImgShowing and guestPlayer.jumpHeightSecure != 9.5 and not guestPlayer.jumping):
-        yJumpImg = 30
-        jumpImgShowing = False
-        guestPlayer.jumpHeight += 0.5
-        guestPlayer.jumpHeightSecure += 0.5
-
-
-    #the following code is applied to the freeze power
-    #this power can only be achieved once since it is supreme and will pretty much allow you a free goal
-    #if a player is winning by 3 goals the other player is frozen for a decent amount of seconds
-    possibleTimeFrozen = applyPowers(player, guestPlayer, time, superJumpImg, screen, xJumpImg, yJumpImg)
-    if isinstance(possibleTimeFrozen, int):
-        timeFrozen = possibleTimeFrozen
-    
-    if isinstance(timeFrozen, int) and (time - timeFrozen) == 150:
-        player.frozen = False
-        guestPlayer.frozen = False
-        beenFreezed = True
-    
-    if firstRun:
-        startPlaying2PlayerButton = createStartPlaying2PlayerButton()
-        startPlayingAIButton = createButtonAI()
-
-    # initial screen
-    if not startPlaying2PlayerButton.pressed and not startPlayingAIButton.pressed:
-        firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg)
-
-
-    clock.tick(10000)
-
-    keyPressed = pygame.key.get_pressed() #gets the key that it is being pressed
-
-    #this makes sure the player can move continously so that we do not have to press the key multiple times
-
-    if not player.frozen:
-
-        if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
-            player.x += 6 + player.extraSpeed                 #0.15
-            player.rectangleX = player.x
-        
-        if keyPressed[pygame.K_LEFT] and player.x >= goalWidth - player.width + 20:         #the purpose of the and is to ensure the player does not go outside of the left bound
-            player.x -= abs(6 + player.extraSpeed)                   #0.15
-            player.rectangleX = player.x
-        
-        if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
-            player.jumping = True
-        
-        if player.jumping:
-            player.jump(soccer)
-
-    #To move the guest player... 
-
-    if not guestPlayer.frozen:
-
-        if keyPressed[pygame.K_s] and guestPlayer.x + guestPlayer.width <= widthScreen - goalWidth + guestPlayer.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
-            guestPlayer.x += 6 + guestPlayer.extraSpeed
-        
-        if keyPressed[pygame.K_a] and guestPlayer.x >= goalWidth - guestPlayer.width + 20:          #the purpose of this and is to ensure the player does not go outside of the left bound                                 
-            guestPlayer.x -= 6 + guestPlayer.extraSpeed
-        
-        if not guestPlayer.jumping and keyPressed[pygame.K_SPACE]: 
-            guestPlayer.jumping = True
-        
-        if guestPlayer.jumping:
-            guestPlayer.jump(soccer)
-    
-
-    checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, textGoal, textGoalRectangle, screen)
-
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            runPygame = False
-            pygame.quit()  	# ensures pygame module closes properly
-            os._exit(0)	    # ensure the window closes
-            
-    #sets the background color of the display
-    screen.blit(pygame.image.load("Head Soccer Background Dani Edited.png"), (0,0))
-    #######################################
-    black = (0,0,0)
-    green = (0, 255, 0)
-    red = (255, 0, 0)
-    #rectangle for debugging purposes
-    #rectangle of player1 and ellipse
-    pygame.draw.rect(screen, black,(player.x + 18, player.y + 25, player.width - 38, player.height  - 28),5)
-    pygame.draw.ellipse(screen, green, (player.x + 7, player.y + 5, player.width - 16, player.height - 55), 4)
-
-    #rectangle of guestPlayer and ellipse
-    pygame.draw.rect(screen, black, (guestPlayer.x + 6, guestPlayer.y + 50, guestPlayer.width - 23, guestPlayer.height - 47), 5)
-    pygame.draw.ellipse(screen, green, (guestPlayer.x - 5, guestPlayer.y - 5, guestPlayer.width + 2 , guestPlayer.height - 35), 4)
-    ######################################
-    # pygame.draw.polygon(screen, red,((widthScreen,heightScreen), (widthScreen - goalWidth,heightScreen), (widthScreen - goalWidth, heightScreen - goalHeight + 30)), 10)
-    ##############################################
-    #The following lines update the current position of the objects
-    ##############################################
-    screen.blit(soccerImg, (soccer.x, soccer.y))
-    screen.blit(playerImg, (player.x, player.y))
-    screen.blit(guestPlayerImg, (guestPlayer.x, guestPlayer.y))
-    screen.blit(goalLeftImg, (0, heightScreen - goalHeight))
-    screen.blit(goalRightImg, (widthScreen - goalWidth, heightScreen - goalHeight))
-    createGoalCount(player, guestPlayer, screen, widthScreen)
-
-    if jumpImgShowing:
-        screen.blit(superJumpImg, (xJumpImg, yJumpImg))
-    
-    if speedImgShowing:
-        screen.blit(runFastImg, (speedX, speedY))
-
-    pygame.display.flip()
-
-    firstRun = False
+    #fillleaderboard before starting to play
+    fillLeaderboard()
+    mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
