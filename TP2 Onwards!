@@ -913,6 +913,7 @@ def createPauseButton():
 
 def createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
     global currentLeaderboard
+
     text = ''
     text = ''
     text1 = ''
@@ -2013,7 +2014,6 @@ def fillLeaderboard():
     global firstScoreInts
     global compareScore
 
-    scoresfile = []
     fileL = readFile('Leaderboard')
     saveScores = ""
     #unfortunately when the file is empty the length of it is 1 insteaf of 0 (bc of space or something) so we check if the file is length 1
@@ -2027,14 +2027,17 @@ def fillLeaderboard():
 
         for i in range(len(currentLeaderboard)):
             compareScore = currentLeaderboard[i]
-            if abs(int(compareScore[0]) - int(compareScore[2])) < abs(int(score[0]) - int(score[2])):
-                currentLeaderboard.insert(i, score)
-                
-                #to save the scores put them in a string
-                for everyScore in currentLeaderboard:
-                    saveScores += everyScore + ","
-                #once we save all our scores in saveScores write it to the file
-            
+            if len(score) != 0:
+                if abs(int(compareScore[0]) - int(compareScore[2])) < abs(int(score[0]) - int(score[2])):
+                    currentLeaderboard.insert(i, score)
+                    
+                    #to save the scores put them in a string
+                    for everyScore in currentLeaderboard:
+                        saveScores += everyScore + ","
+                    writeFile('Leaderboard', saveScores[0:len(saveScores) - 1])
+                    return
+
+        if len(score) != 0:    
             #let's say our score was not greater than any of the previous but it was smaller.... we still add it
             if abs(int(compareScore[0]) - int(compareScore[2])) > abs(int(score[0]) - int(score[2])):
                 currentLeaderboard.append(score)
@@ -2042,10 +2045,8 @@ def fillLeaderboard():
                 for everyScore in currentLeaderboard:
                     saveScores += everyScore + ","
 
-            #finally we can write all the scores into the file
-            writeFile('Leaderboard', saveScores[0:len(saveScores) - 1])
-
-    fileL = readFile('Leaderboard')
+                #finally we can write all the scores into the file
+                writeFile('Leaderboard', saveScores[0:len(saveScores) - 1])
 
 #this function contains the code for the two player screen
 def twoPlayerScreen():
@@ -2376,8 +2377,10 @@ pauseGame = False
 
 # n = Network()
 # p = n.getPos()
+#while True:
+    # p2 = n.send(p)
 
 while runPygame:
-    # initial screen
-    # p2 = n.send(p)
+    #fillleaderboard before starting to play
+    fillLeaderboard()
     firstScreen(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
