@@ -913,6 +913,7 @@ def createPauseButton():
 
 def createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
     global currentLeaderboard
+    print(f'createLeaderboard: {currentLeaderboard}')
 
     text = ''
     text = ''
@@ -2014,11 +2015,13 @@ def fillLeaderboard():
     global firstScoreInts
     global compareScore
 
+    currentLeaderboard = []
     fileL = readFile('Leaderboard')
     saveScores = ""
-    #unfortunately when the file is empty the length of it is 1 insteaf of 0 (bc of space or something) so we check if the file is length 1
-    if len(fileL) == 1:
+    #check if the length of the file is 0 and if so add the score
+    if len(fileL) == 0:
         writeFile('Leaderboard', score)
+        currentLeaderboard.append(score)
    
     else:
         #convert our file into a list containing all the scores. Ex: ['2-0', '2-1', '2-2']
@@ -2028,9 +2031,13 @@ def fillLeaderboard():
         for i in range(len(currentLeaderboard)):
             compareScore = currentLeaderboard[i]
             if len(score) != 0:
+                #we do not want to save the same score twice
+                if (int(compareScore[0]) == int(score[0]) and int(compareScore[2]) == int(score[2])):
+                    print("Scores are equal! \n \n")
+                    return
+                #check if the score is better than other scores
                 if abs(int(compareScore[0]) - int(compareScore[2])) < abs(int(score[0]) - int(score[2])):
                     currentLeaderboard.insert(i, score)
-                    
                     #to save the scores put them in a string
                     for everyScore in currentLeaderboard:
                         saveScores += everyScore + ","
