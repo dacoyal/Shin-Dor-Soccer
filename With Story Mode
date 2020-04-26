@@ -529,12 +529,12 @@ class DoraemonPlayer(SoccerPlayer):
 
         #checks if it is inside the player's body and if it is to the left of it
         elif (not self.checkBallHitsMiddleHead(soccer, epsilon) and 
-        (soccer.y >= self.y) and 
+        (soccer.y >= self.y + 10) and 
         (soccer.y + soccer.width  <= self.y + self.width) and 
         (soccer.x > self.x + 2)  and
         (soccer.x + soccer.width < self.x + self.width) and 
         (abs(soccer.x - self.x)) < abs(soccer.x + soccer.width - self.x - self.width)):
-            # soccer.x = self.x - 10
+            print("Hello")
             soccer.BDY = 9.5*math.sin(70)
             soccer.BDX = -7*math.cos(70) - 0.25
             collided = True
@@ -1993,8 +1993,15 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 guestPlayer.goalCount = 0
                 guestPlayer.extraSpeed = 0
                 player.extraSpeed = 0
-                player.jumpHeightSecure = 8.5
-                player.jumpHeight = 8.5
+
+                if not doramiChosen:
+                    player.jumpHeightSecure = 8.5
+                    player.jumpHeight = 8.5
+
+                elif doramiChosen:
+                    player.jumpHeightSecure = 7
+                    player.jumpHeight = 7
+
                 guestPlayer.jumpHeightSecure = 8
                 guestPlayer.jumpHeight = 8
                 soccer.x = widthScreen//2
@@ -2023,8 +2030,15 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 guestPlayer.goalCount = 0
                 guestPlayer.extraSpeed = 0
                 player.extraSpeed = 0
-                player.jumpHeightSecure = 8.5
-                player.jumpHeight = 8.5
+                
+                if not doramiChosen:
+                    player.jumpHeightSecure = 8.5
+                    player.jumpHeight = 8.5
+                
+                elif doramiChosen:
+                    player.jumpHeightSecure = 7
+                    player.jumpHeight = 7
+
                 guestPlayer.jumpHeightSecure = 8
                 guestPlayer.jumpHeight = 8
                 soccer.x = widthScreen//2
@@ -2358,7 +2372,6 @@ def twoPlayerScreen():
                     player.jumpHeightSecure = 8.5
                     player.jumpHeight = 8.5
                 elif doramiChosen:
-                    print("Hello")
                     player.jumpHeightSecure = 7
                     player.jumpHeight = 7
                 
