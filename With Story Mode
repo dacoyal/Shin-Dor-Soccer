@@ -2,7 +2,8 @@
 # 15-112:Fundamentals of Programming and Computer Science
 # Carnegie Mellon University
 # Final Project: ShinDor Soccer
-# By: Alejandro Ruiz
+# Code by: Alejandro Ruiz
+# Graphics by: Daniela Ruiz Gomez
 #####################################################################################
 #YET TO BE FINISHED
 
@@ -57,8 +58,8 @@ guestPlayerImg = pygame.image.load("Doraemon Left.png")
 playerImg = pygame.image.load("Shin Chan Right.png")
 
 #Goal Image gotten from: https://www.seekpng.com/idown/u2q8e6y3t4w7y3r5_soccer-goal-sprite-006-soccer-goal-sprite-sheet/
-goalLeftImg = pygame.image.load("Goal Left.png")
-goalRightImg = pygame.image.load("Goal Right.png")
+goalLeftImg = pygame.image.load("Goal Left Fixed.png")
+goalRightImg = pygame.image.load("Goal Right Fixed.png")
 
 #Up Icon made by Daniela Ruiz Gomez 
 #png inside block from: https://www.pngwing.com/en/free-png-mralp
@@ -75,6 +76,11 @@ restartImg = pygame.image.load("Restart.png")
 
 #https://imgbin.com/download-png/7Ayuc7gZ
 doramiImg = pygame.image.load("Dorami.png")
+
+#jail from : https://www.tornado-studios.com/stock-3d-models/jail-cell-01
+#nobita crying from Doraemon series
+#image made by Daniela Ruiz Gomez
+nobitaJail = pygame.image.load("Nobita Jail Resized.png")
 
 goalHeight = 250
 goalWidth = 127
@@ -404,7 +410,7 @@ class SoccerPlayer(object):
             
             if self.jumping:
                 soccer.BDY = 9*math.sin(-70)
-                soccer.BDX = -12*math.cos(70) - 0.25
+                soccer.BDX = -10*math.cos(70) - 0.25
         
             elif soccer.BDY <0: #meaning the ball is moving upwards
                 soccer.BDY = 8*math.sin(-70)
@@ -449,8 +455,8 @@ class SoccerPlayer(object):
         (soccer.x <= self.x + self.width - 20)):
             #if the player is jumping then we apply the sin and cos as if a force was applied creating a physics-parabola effect
             if self.jumping:
-                soccer.BDY = -12*math.sin(70)
-                soccer.BDX = 12*math.cos(70) + 0.25
+                soccer.BDY = -10*math.sin(70)
+                soccer.BDX = 10*math.cos(70) + 0.25
 
             elif soccer.BDY < 0:            #this means the soccer is moving upwards
                 soccer.BDY = -10*math.sin(70)
@@ -2636,8 +2642,11 @@ def choosePlayer(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, 
     screen = pygame.display.set_mode((width, height))
     background = pygame.image.load("Choose Character.jpg")
     topLeft = (0, 0)
+    #Image from: https://www.pngwave.com/png-clip-art-vufqe
     doramiChoose = pygame.image.load("DoramiChoose.png")
+    #Image from: https://www.clipartkey.com/view/bbimmw_crayon-shin-chan-png/
     shinChanChoose = pygame.image.load("ShinChanChoose.png")
+
     doramiCoord = (525, 315)
     shinChanCoord = (250, 375)
     shinChanWidth = 150
@@ -2679,45 +2688,55 @@ def choosePlayer(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, 
 #in this screen we will tell the user to pick single player to continue with the story of this mode!
 def afterChoosingPlayer(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton, background_Sound):
     global time
+    global nobitaJail
+
+    #Image made by Daniela Ruiz Gomez
+    blood = pygame.image.load("Blood Resized.png")
 
     time = 0
     run = True
-    background = pygame.image.load("SaveNobita.jpg")
+    #Image from : https://www.shutterstock.com/es/search/background+game+prison?image_type=illustration
+    background = pygame.image.load("Choose Character.jpg")
+
     topLeft = (0, 0)
     width = 1024
     height = 640
     screen = pygame.display.set_mode((width, height))
-    black = (0, 0, 0)
     red = (255, 0, 0)
     white = (255, 255, 255)
+    coral = (255,127,80)
+    green = (0, 255, 0)
     circles = 0
     firstRun = True
 
     save = "Save Nobita..."
-    saveText = font.render(save, True, (0, 0, 0))
+    saveText = font.render(save, True, blue)
     saveTextRect = saveText.get_rect()
-    saveTextRect.center = (width//2, height//2)
+    saveTextRect.center = (width//2, 30)
 
     save1 = "On Single Player Mode..."
-    saveText1 = font.render(save1, True, (0, 0, 0))
+    saveText1 = font.render(save1, True, blue)
     saveText1Rect = saveText1.get_rect()
-    saveText1Rect.center = (width//2, height//2 + 50)
+    saveText1Rect.center = (width//2, 90)
 
     save2 = "...Maybe..."
-    saveText2 = font.render(save2, True, (0, 0, 0))
+    saveText2 = font.render(save2, True, green)
     saveText2Rect = saveText2.get_rect()
-    saveText2Rect.center = (width//2, height//2 + 100)
+    saveText2Rect.center = (width//2, 190)
 
     save3 = "Press to continue"
-    saveText3 = font.render(save3, True, (0, 0, 0))
+    saveText3 = font.render(save3, True, red)
     saveText3Rect = saveText3.get_rect()
-    saveText3Rect.center = (width//2, height//2 + 200)
+    saveText3Rect.center = (width//2, 230)
 
     while run:
+        time += 1
+
         if firstRun:
             screen.blit(background, topLeft)
+            screen.blit(nobitaJail, (250, 150))
+            screen.blit(blood, topLeft)
 
-        time += 1
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -2725,21 +2744,25 @@ def afterChoosingPlayer(widthScreen, heightScreen, shinChanIntroImg, doraemonInt
                 pygame.quit() 
                 os._exit(0)
             #check if the user pressed to continue with the game
-            if circles == 300 and event.type == pygame.MOUSEBUTTONDOWN:
+            if circles == 200 and event.type == pygame.MOUSEBUTTONDOWN:
                 background_Sound.stop()
                 run = False
                 mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
 
         
-        if circles != 300:
-            pygame.time.wait(5)
-            pygame.draw.circle(screen, red, (random.randint(2, widthScreen), random.randint(2 , heightScreen + 30)), 30)
+        if circles != 200:
+            pygame.time.wait(20)
+            if time % 2 == 0:
+                pygame.draw.circle(screen, red, (random.randint(10, 302), random.randint(200 , heightScreen - 20)), 20)
+            else:
+                pygame.draw.circle(screen, red, (random.randint(700, widthScreen - 20), random.randint(200 , heightScreen - 20)), 20)
             circles += 1
 
-        if circles == 300:
+        if circles == 200:
             screen.blit(saveText1, saveText1Rect)
             screen.blit(saveText2, saveText2Rect)
             screen.blit(saveText3, saveText3Rect)
+
 
         screen.blit(saveText, saveTextRect)
         pygame.display.flip()
@@ -2749,6 +2772,12 @@ def doraemonMad():
     width = 1024
     height = 640
     screen = pygame.display.set_mode((width, height))
+
+
+    #From: https://chatsticker.com/sticker/doraemons-many-emotions/19964
+    doraemon = pygame.image.load("Mad Doraemon Resized2.png")
+
+    #Image from : https://www.shutterstock.com/es/search/background+game+prison?image_type=illustration
     background = pygame.image.load("Choose Character.jpg")
     topLeft = (0,0)
     coral = (255,127,80)
@@ -2759,18 +2788,22 @@ def doraemonMad():
     text1t = "Doraemon is fed up..."
     text1 = font.render(text1t, True, coral)
     text1Rect = text1.get_rect()
-    text1Rect.center = (width//2, height//2 + 50)
+    text1Rect.center = (width//2, height//2 - 300)
 
     text2t = "He will try to end Nobita..."
     text2 = font.render(text2t, True, red)
     text2Rect = text2.get_rect()
-    text2Rect.center = (width//2, height//2 + 100)
+    text2Rect.center = (width//2, height//2 - 250)
 
     text3t = "Press anywhere to continue"
     text3 = font.render(text3t, True, blue)
     text3Rect = text3.get_rect()
-    text3Rect.center = (width//2, 100)
+    text3Rect.center = (width//2, heightScreen//2 - 100)
     
+    #jail from : https://www.tornado-studios.com/stock-3d-models/jail-cell-01
+    #nobita crying from Doraemon series
+    #image made by Daniela Ruiz Gomez
+    nobita = pygame.image.load("Nobita Jail Resized.png")
 
     while run:
         screen.blit(background, topLeft)
@@ -2786,6 +2819,9 @@ def doraemonMad():
                 run = False
                 saveNobita()
 
+        
+        screen.blit(doraemon, (widthScreen//2 + 100, 200))
+        screen.blit(nobita, (175, 150))
         screen.blit(text1, text1Rect)
         screen.blit(text2, text2Rect)
         screen.blit(text3, text3Rect)
@@ -2797,9 +2833,11 @@ def saveNobita():
     width = 1024
     height = 640
 
+    #Image from : https://www.shutterstock.com/es/search/background+game+prison?image_type=illustration
     background = pygame.image.load("Choose Character.jpg")
     screen = pygame.display.set_mode((width, height))
     topLeft = (0,0)
+    
 
     run = True
 
