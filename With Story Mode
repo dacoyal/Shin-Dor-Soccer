@@ -2060,7 +2060,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         pygame.display.flip()
 
 #screen where the user will be able to choose what level to play agains
-def createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer):
+def createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, piano):
     global AIlevel
     global easyButton
     global mediumButton
@@ -2090,6 +2090,7 @@ def createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, gu
 
             if event.type == pygame.QUIT:
                 createLevels = False
+                piano.stop()
                 pygame.quit() 
                 os._exit(0)
 
@@ -2098,12 +2099,14 @@ def createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, gu
             AIlevel = "Easy"
             easyButton.pressed = False
             createLevels = False
+            piano.stop()
             createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
 
         if mediumButton.pressed:
             AIlevel = "Medium"
             mediumButton.pressed = False
             createLevels = False
+            piano.pause()
             createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
         
         levelScreen.blit(introBackgroundImg, topLeft)
@@ -2773,8 +2776,11 @@ def doraemonMad():
     height = 640
     screen = pygame.display.set_mode((width, height))
 
+    #https://www.thedarkpiano.com/creepy-piano-music
+    piano = mixer.Sound("Piano.mp3")
 
     #From: https://chatsticker.com/sticker/doraemons-many-emotions/19964
+    #Drawn by Daniela Ruiz Gomez
     doraemon = pygame.image.load("Mad Doraemon Resized2.png")
 
     #Image from : https://www.shutterstock.com/es/search/background+game+prison?image_type=illustration
@@ -2808,6 +2814,7 @@ def doraemonMad():
     while run:
         screen.blit(background, topLeft)
 
+        piano.play()
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -2817,7 +2824,7 @@ def doraemonMad():
 
             if event.type == pygame.MOUSEBUTTONDOWN:
                 run = False
-                saveNobita()
+                saveNobita(piano)
 
         
         screen.blit(doraemon, (widthScreen//2 + 100, 200))
@@ -2829,7 +2836,7 @@ def doraemonMad():
 
 
 #this screen is the save Nobita screen
-def saveNobita():
+def saveNobita(piano):
     width = 1024
     height = 640
 
@@ -2837,6 +2844,18 @@ def saveNobita():
     background = pygame.image.load("Choose Character.jpg")
     screen = pygame.display.set_mode((width, height))
     topLeft = (0,0)
+    green = (0, 255, 0)
+    red = (255, 0, 0)
+
+    text3t = "Press anywhere to continue"
+    text3 = font.render(text3t, True, red)
+    text3Rect = text3.get_rect()
+    text3Rect.center = (width//2, heightScreen - 20)
+
+    text4t = "BEAT DORAEMON TO SAVE NOBITA!"
+    text4 = font.render(text4t, True, green)
+    text4Rect = text4.get_rect()
+    text4Rect.center = (width//2 + 20, heightScreen//2 )
     
 
     run = True
@@ -2851,9 +2870,10 @@ def saveNobita():
                 os._exit(0)
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
+                createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, piano)
 
-        
+        screen.blit(text3, text3Rect)
+        screen.blit(text4, text4Rect)
         pygame.display.flip()
 
 
