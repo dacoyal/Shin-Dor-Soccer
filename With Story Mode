@@ -41,7 +41,8 @@ screen = pygame.display.set_mode((widthScreen, heightScreen))
 pygame.display.set_caption("ShinDor Soccer")
 
 #declare variables
-
+# from: https://vectortoons.com/products/a-groovy-looking-nightclub-dance-floor-background
+disco = pygame.image.load("disco.jpg")
 #<div>Icons made by <a href="https://www.flaticon.com/authors/alfredo-hernandez" title="Alfredo Hernandez">Alfredo Hernandez</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
 xImg = pygame.image.load("xbutton.png")
 
@@ -2771,6 +2772,7 @@ def afterChoosingPlayer(widthScreen, heightScreen, shinChanIntroImg, doraemonInt
         pygame.display.flip()
         firstRun = False
 
+#this draws the screen where doraemon appears mad next to nobita
 def doraemonMad():
     width = 1024
     height = 640
@@ -2837,6 +2839,8 @@ def doraemonMad():
 
 #this screen is the save Nobita screen
 def saveNobita(piano):
+    global nobitaJail
+
     width = 1024
     height = 640
 
@@ -2850,12 +2854,12 @@ def saveNobita(piano):
     text3t = "Press anywhere to continue"
     text3 = font.render(text3t, True, red)
     text3Rect = text3.get_rect()
-    text3Rect.center = (width//2, heightScreen - 20)
+    text3Rect.center = (width//2, heightScreen - 5)
 
     text4t = "BEAT DORAEMON TO SAVE NOBITA!"
     text4 = font.render(text4t, True, green)
     text4Rect = text4.get_rect()
-    text4Rect.center = (width//2 + 20, heightScreen//2 )
+    text4Rect.center = (width//2 + 20, heightScreen//2 - 100)
     
 
     run = True
@@ -2874,6 +2878,62 @@ def saveNobita(piano):
 
         screen.blit(text3, text3Rect)
         screen.blit(text4, text4Rect)
+        screen.blit(nobitaJail, (250, 150))
+        pygame.display.flip()
+
+#this screen will be showing when the user wins
+def wonScreen():
+    width = 1100
+    height = 619
+    green = (0, 255, 0)
+
+    run = True
+    screen = pygame.display.set_mode((width, height))
+    nobita = pygame.image.load("Nobita Happy Standing Resized.png")
+    dorami = pygame.image.load("Dorami End Resized.png")
+    shinChan = pygame.image.load("ShinChan End.png")
+    background = pygame.image.load("Disco.jpg")
+
+    text4t = "YOU WON!"
+    text4 = font.render(text4t, True, green)
+    text4Rect = text4.get_rect()
+    text4Rect.center = (width//2 + 20, heightScreen//2 - 50 )
+
+    colorRect = (255, 255, 255)
+    colorText = (0, 255, 0)
+
+    rectX, rectY = width//2 - 70, height//2 - 100
+    rectWidth, rectHeight = 185, 75
+
+    while run:
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.quit()
+                os._exit(0)
+            
+            mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+
+            if mouseCoordX >= rectX and mouseCoordX <= rectX + rectWidth and mouseCoordY >= rectY and mouseCoordY <+ rectY + rectHeight: 
+                text4 = font.render(text4t, True, (0,0,0))
+                colorRect = green
+            else:
+                text4 = font.render(text4t, True, green)
+                colorRect = (255, 255, 255)
+
+            #Press in the "YOU WON!" label to go back to the main menu
+            if event.type == pygame.MOUSEBUTTONDOWN and (mouseCoordX >= rectX and mouseCoordX <= rectX + rectWidth and mouseCoordY >= rectY and mouseCoordY <+ rectY + rectHeight):
+                run = False
+                mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
+
+
+        screen.blit(background, (0,0))
+        pygame.draw.rect(screen, colorRect, (rectX, rectY, rectWidth, rectHeight))
+        screen.blit(text4, text4Rect)
+        screen.blit(nobita, (width//2 - 50, height//2))
+        screen.blit(dorami, (width//2 - 250, height//2))
+        screen.blit(shinChan, (width//2  + 150, height//2 + 67))
         pygame.display.flip()
 
 
