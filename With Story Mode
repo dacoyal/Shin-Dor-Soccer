@@ -21,9 +21,11 @@ hourToday = today.hour
 minuteToday = today.minute
 stadiumImg = None
 #determine wether the background should be day or night
-if hourToday > 20 or hourToday < 6:
-    stadiumImg = "Head Soccer Background Edited.png"
+if hourToday >= 19 or hourToday < 6:
+    #stadium made by Daniela Ruiz Gomez inspired from a stadium from the game "Head Soccer La Liga"
+    stadiumImg = "Head Soccer Background Dani Edited.png"
 else:
+    #stadium made by Daniela Ruiz Gomez inspired from a stadium from the game "Head Soccer La Liga"
     stadiumImg ="Day Stadium Edited.png"
 
 pygame.init()
@@ -38,27 +40,39 @@ screen = pygame.display.set_mode((widthScreen, heightScreen))
 pygame.display.set_caption("ShinDor Soccer")
 
 #declare variables
+
 #<div>Icons made by <a href="https://www.flaticon.com/authors/alfredo-hernandez" title="Alfredo Hernandez">Alfredo Hernandez</a> from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a></div>
 xImg = pygame.image.load("xbutton.png")
+
 #pause image gotten from: https://www.clipartmax.com/download/m2i8Z5H7Z5G6Z5G6_389-free-vector-icons-red-pause-button-png/
 pauseImg = pygame.image.load("Pause.png")
+
 ##Soccer gotten from: http://www.pngmart.com/image/592
 soccerImg = pygame.image.load("Soccer.png")
+
 #Doraemon gotten from: https://www.pngfind.com/mpng/hJohToh_free-download-doraemon-png-clipart-doraemon-doraemon-transparent/
 guestPlayerImg = pygame.image.load("Doraemon Left.png")
+
 #Shin Chan gotten from: https://www.seekpng.com/ipng/u2q8u2a9r5t4q8q8_shin-chan-shin-chan/
 playerImg = pygame.image.load("Shin Chan Right.png")
+
 #Goal Image gotten from: https://www.seekpng.com/idown/u2q8e6y3t4w7y3r5_soccer-goal-sprite-006-soccer-goal-sprite-sheet/
 goalLeftImg = pygame.image.load("Goal Left.png")
 goalRightImg = pygame.image.load("Goal Right.png")
-#Up Icon made by Daniela Ruiz Gomez
+
+#Up Icon made by Daniela Ruiz Gomez 
+#png inside block from: https://www.pngwing.com/en/free-png-mralp
 superJumpImg = pygame.image.load("Super Jump Dani Resized.png")
+
 #Image made by Daniela Ruiz Gomez
 runFastImg = pygame.image.load("Run Fast Dani Edited.png")
+
 #https://www.pngitem.com/middle/iTJxi_3d-play-button-png-transparent-png/
 playImg = pygame.image.load("Play.png")
+
 #https://www.kindpng.com/downpng/obboRo_restart-button-being-more-experienced-team-leaders-so-delhi-logo-png-transparent/
 restartImg = pygame.image.load("Restart.png")
+
 #https://imgbin.com/download-png/7Ayuc7gZ
 doramiImg = pygame.image.load("Dorami.png")
 
@@ -710,8 +724,8 @@ class DoramiPlayer(SoccerPlayer):
 
         #checking if it collides in the left
         if( (self.jumping) and (soccer.y + soccer.height <= self.y + self.height) and
-        (soccer.y >= self.y) and (soccer.x > self.x) and (soccer.x <= self.x + 5)):
-            soccer.BDY = 11*math.sin(-70)
+        (soccer.y >= self.y) and (soccer.x > self.x) and (soccer.x <= self.x + 5)): 
+            soccer.BDY = 11*math.sin(-65)
             soccer.BDX = -9*math.cos(70) - 0.25
             collided = True
             self.collidedTimes += 1
@@ -728,11 +742,11 @@ class DoramiPlayer(SoccerPlayer):
         #This checks if the ball was hit with the upper half of the body and
         if ((soccer.y >= self.y - 10) and 
         (soccer.y <= self.y + self.height/2) and 
-        (soccer.x + soccer.width >= self.x + 5) and 
+        (soccer.x + soccer.width >= self.x + 25) and 
         (soccer.x + soccer.width <= self.x + self.width/2)):
             #if the player is jumping
             if self.jumping:
-                # print("Fix \n")
+                # print("Hello\n")   
                 soccer.BDY = 11*math.sin(-70)
                 soccer.BDX = -9*math.cos(70) - 0.25
 
@@ -836,7 +850,7 @@ class DoramiPlayer(SoccerPlayer):
         #if the ball hits the player directly in the middle (so like directly in head)
         #doraemon has a bigger head so we need to change this
         if self.jumping and (
-        ((soccer.y + soccer.height >= self.y - 100) and (soccer.x >= self.x) and
+        ((soccer.y + soccer.height >= self.y - 5) and (soccer.x >= self.x) and
         (soccer.x + soccer.width <= self.x + self.width - 3)) and soccer.BDY > 0):
             soccer.BDY *= -1
             self.collidedTimes += 1
@@ -952,9 +966,10 @@ def checkForCollisionsAndOutOfBoundsAndGoal(heightScreen, widthScreen, epsilon, 
     
     player.checkBallNotMoving(guestPlayer, soccer, epsilon, heightScreen)
 
-#############################################
-#first let us define the button to play the game
-#############################################
+
+##################################################################
+############## CREATE BUTTONS FUNCTIONS ##########################
+##################################################################
 def createStartPlaying2PlayerButton():
     #properties of the button
     xstartButton = 75         #295
@@ -972,10 +987,8 @@ def createStartPlaying2PlayerButton():
     startPlaying2PlayerButton = Button(xstartButton, ystartButton, widthstartButton, heightstartButton, fontButton, black, buttonColor, textPlayingButton, xCenterTextButton, yCenterTextButton, pressed)
     return startPlaying2PlayerButton
 
-#################################################
-#create the button to start playing against the AI
-##################################################
 
+#button for the AI
 def createButtonAI():
     #properties of the button
     xButton = 875                       #660
@@ -1099,7 +1112,11 @@ def createPauseButton():
     pressed = False
     return PauseGame(width, height, x, y, pressed)
 
+##################################################################
+############## CREATES THE LEADERBOARD SCREEN ####################
+##################################################################
 
+#only displays the top 3 scores
 def createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
     global currentLeaderboard
 
@@ -1352,10 +1369,8 @@ def createPauseMenu(screen):
 
     pygame.draw.rect(screen, blue, (rectX, rectY, rectWidth, rectHeight))
 
-
-
 ##############################################
-#This function displays the first screen######
+#This function displays the menu screen#######
 ##############################################
 def mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
     global time
@@ -1402,11 +1417,8 @@ def mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, socc
             guestPlayer.frozen = False
             guestPlayer.extraSpeed = 0
             player.extraSpeed = 0
-            player.jumpHeightSecure = 8.5
-            player.jumpHeight = 8.5
-            guestPlayer.jumpHeightSecure = 8
-            guestPlayer.jumpHeight = 8
             time = 0
+            doraemonMad()
             createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer)
 
         if startPlaying2PlayerButton.pressed:
@@ -1417,10 +1429,6 @@ def mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, socc
             guestPlayer.frozen = False
             guestPlayer.extraSpeed = 0
             player.extraSpeed = 0
-            player.jumpHeightSecure = 8.5
-            player.jumpHeight = 8.5
-            guestPlayer.jumpHeight = 8
-            guestPlayer.jumpHeightSecure = 8
             time = 0
             twoPlayerScreen()
             #if the button is pressed we are done with the first display
@@ -1707,6 +1715,11 @@ def mediumAI(cpu, soccer, widthScreen, goalWidth):
         if cpu.jumpHeight + cpu.y <= soccer.y + soccer.height or cpu.jumping and soccer.y + soccer.width <= cpu.y:
             cpu.jump(soccer)
             cpu.x += (2 + cpu.extraSpeed)
+
+
+##################################################################
+############## AI MAIN GAME OCCURS HERE  #########################
+##################################################################
     
 #Create the screen that will be popped if we select "Single Player"
 def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer):
@@ -1729,8 +1742,12 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
     global restartButton
     global restartImg
     global stadiumImg
+    global doramiChosen
+    global doramiImg
 
     singlePlayerScreen = True
+
+    if doramiChosen: player = dorami
 
     while singlePlayerScreen:
         
@@ -1777,8 +1794,14 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 guestPlayer.goalCount = 0
                 guestPlayer.extraSpeed = 0
                 player.extraSpeed = 0
-                player.jumpHeightSecure = 8.5
-                player.jumpHeight = 8.5
+
+                if not doramiChosen:
+                    player.jumpHeightSecure = 8.5
+                    player.jumpHeight = 8.5
+                elif doramiChosen:
+                    player.jumpHeightSecure = 7
+                    player.jumpHeight = 7
+
                 guestPlayer.jumpHeightSecure = 8
                 guestPlayer.jumpHeight = 8
                 soccer.x = widthScreen//2
@@ -1910,7 +1933,10 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         #The following lines update the current position of the objects
         ##############################################
         screen.blit(soccerImg, (soccer.x, soccer.y))
-        screen.blit(playerImg, (player.x, player.y))
+        if not doramiChosen:
+            screen.blit(playerImg, (player.x, player.y))
+        else:
+            screen.blit(doramiImg, (player.x, player.y))
         screen.blit(guestPlayerImg, (guestPlayer.x, guestPlayer.y))
         screen.blit(goalLeftImg, (0, heightScreen - goalHeight))
         screen.blit(goalRightImg, (widthScreen - goalWidth, heightScreen - goalHeight))
@@ -2197,6 +2223,10 @@ def applyPowers(player, guestPlayer, time, superJumpImg, screen, x, y):
 
     return timeFrozen
 
+
+##################################################################
+############## CREATES OUR LEADERBOARD ###########################
+##################################################################
 #creates our leaderBoard with the best scores sorted in order of best to worst
 def fillLeaderboard():
     global score
@@ -2222,7 +2252,6 @@ def fillLeaderboard():
             if len(score) != 0:
                 #we do not want to save the same score twice
                 if (int(compareScore[0]) == int(score[0]) and int(compareScore[2]) == int(score[2])):
-                    print("Scores are equal! \n \n")
                     return
                 #check if the score is better than other scores
                 if abs(int(compareScore[0]) - int(compareScore[2])) < abs(int(score[0]) - int(score[2])):
@@ -2244,6 +2273,10 @@ def fillLeaderboard():
                 #finally we can write all the scores into the file
                 writeFile('Leaderboard', saveScores[0:len(saveScores) - 1])
 
+
+##################################################################
+############## TWO PLAYER MAIN GAME HERE #########################
+##################################################################
 #this function contains the code for the two player screen
 def twoPlayerScreen():
     global player
@@ -2273,6 +2306,7 @@ def twoPlayerScreen():
     global dorami
     global doramiImg
     global stadiumImg
+    global doramiChosen
 
     time += 1
     play = True
@@ -2319,6 +2353,17 @@ def twoPlayerScreen():
                 guestPlayer.jumping = False
                 fillLeaderboard()
                 AIlevel = None
+
+                if not doramiChosen:
+                    player.jumpHeightSecure = 8.5
+                    player.jumpHeight = 8.5
+                elif doramiChosen:
+                    print("Hello")
+                    player.jumpHeightSecure = 7
+                    player.jumpHeight = 7
+                
+                guestPlayer.jumpHeight = 8
+                guestPlayer.jumpHeightSecure = 8
                 pygame.time.wait(5000)
                 lose_Sound.stop()
                 mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
@@ -2539,7 +2584,6 @@ def twoPlayerScreen():
                 player.extraSpeed = 0
                 player.jumpHeightSecure = 8.5
                 player.jumpHeight = 8.5
-                guestPlayer.jumpHeightSecure = 8
                 guestPlayer.jumpHeight = 8
                 soccer.x = widthScreen//2
                 soccer.y = heightScreen//2 - 20
@@ -2552,6 +2596,10 @@ def twoPlayerScreen():
             
 
         pygame.display.flip()
+
+##################################################################
+############## SINGLE PLAYER MODE SCREENS ########################
+##################################################################
 
 #the screen where the player will choose a player
 def choosePlayer(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
@@ -2621,7 +2669,6 @@ def afterChoosingPlayer(widthScreen, heightScreen, shinChanIntroImg, doraemonInt
 
     time = 0
     run = True
-    somethingHappens = False
     background = pygame.image.load("SaveNobita.jpg")
     topLeft = (0, 0)
     width = 1024
@@ -2664,33 +2711,101 @@ def afterChoosingPlayer(widthScreen, heightScreen, shinChanIntroImg, doraemonInt
                 run = False
                 pygame.quit() 
                 os._exit(0)
+            #check if the user pressed to continue with the game
+            if circles == 300 and event.type == pygame.MOUSEBUTTONDOWN:
+                background_Sound.stop()
+                run = False
+                mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
+
         
-        if circles != 1200:
+        if circles != 300:
+            pygame.time.wait(5)
             pygame.draw.circle(screen, red, (random.randint(2, widthScreen), random.randint(2 , heightScreen + 30)), 30)
             circles += 1
 
-        if circles == 1200:
+        if circles == 300:
             screen.blit(saveText1, saveText1Rect)
             screen.blit(saveText2, saveText2Rect)
             screen.blit(saveText3, saveText3Rect)
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    run = False
-                    pygame.quit() 
-                    os._exit(0)
-                
-                if event.type == pygame.MOUSEBUTTONDOWN:
-                    background_Sound.stop()
-                    run = False
-                    mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
-
-        if somethingHappens:
-            mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
-
         screen.blit(saveText, saveTextRect)
         pygame.display.flip()
         firstRun = False
+
+def doraemonMad():
+    width = 1024
+    height = 640
+    screen = pygame.display.set_mode((width, height))
+    background = pygame.image.load("Choose Character.jpg")
+    topLeft = (0,0)
+    coral = (255,127,80)
+    red = (255, 0, 0)
+    blue = (102, 178, 255)
+    run = True
+
+    text1t = "Doraemon is fed up..."
+    text1 = font.render(text1t, True, coral)
+    text1Rect = text1.get_rect()
+    text1Rect.center = (width//2, height//2 + 50)
+
+    text2t = "He will try to end Nobita..."
+    text2 = font.render(text2t, True, red)
+    text2Rect = text2.get_rect()
+    text2Rect.center = (width//2, height//2 + 100)
+
+    text3t = "Press anywhere to continue"
+    text3 = font.render(text3t, True, blue)
+    text3Rect = text3.get_rect()
+    text3Rect.center = (width//2, 100)
+    
+
+    while run:
+        screen.blit(background, topLeft)
+
+        
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.quit()
+                os._exit(0)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                run = False
+                saveNobita()
+
+        screen.blit(text1, text1Rect)
+        screen.blit(text2, text2Rect)
+        screen.blit(text3, text3Rect)
+        pygame.display.flip()
+
+
+#this screen is the save Nobita screen
+def saveNobita():
+    width = 1024
+    height = 640
+
+    background = pygame.image.load("Choose Character.jpg")
+    screen = pygame.display.set_mode((width, height))
+    topLeft = (0,0)
+
+    run = True
+
+    while run:
+        screen.blit(background, topLeft)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.quit()
+                os._exit(0)
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
+
+        
+        pygame.display.flip()
+
+
 ################################################
 ################################################
 ############  MAIN GAME LOOP AHEAD #############
