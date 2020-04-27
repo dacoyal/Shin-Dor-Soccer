@@ -3,9 +3,9 @@
 # Carnegie Mellon University
 # Final Project: ShinDor Soccer
 # Code by: Alejandro Ruiz
-# Graphics by: Daniela Ruiz Gomez
+# Graphics by: Daniela Ruiz
 #####################################################################################
-#YET TO BE FINISHED
+
 
 import pygame
 import os
@@ -493,14 +493,34 @@ class SoccerPlayer(object):
             self.collidedTimes += 1
 
         return collided
+
     def checkBallHitsMiddleHead(self, soccer, epsilon):
         #if the ball hits the player directly in the middle (so like directly in head)
-        if (
-        ((abs(soccer.y + soccer.height - self.y + 6)) <= epsilon) and (soccer.x >= self.x) and
-        (soccer.x + soccer.width <= self.x + self.width - 3)) and soccer.BDY > 0:
+
+        if (self.jumping and abs(soccer.y + soccer.height >= self.y - 2) and 
+        soccer.x >= self.x and soccer.x + soccer.width <= self.x + self.width - 3 
+        and soccer.BDY > 0):
+            soccer.BDY *= -1
+            soccer.y -= 8
+            self.collidedTimes += 1
+            return True
+        
+        elif ( not self.jumping and 
+        abs(soccer.y + soccer.height >= self.y - 2) and 
+        soccer.x >= self.x and soccer.x + soccer.width <= self.x + self.width - 3 
+        and soccer.BDY > 0):
+
             soccer.BDY *= -1
             self.collidedTimes += 1
             return True
+
+
+        # if (
+        # ((abs(soccer.y + soccer.height - self.y + 6)) <= epsilon) and (soccer.x >= self.x) and
+        # (soccer.x + soccer.width <= self.x + self.width - 3)) and soccer.BDY > 0:
+        #     soccer.BDY *= -1
+        #     self.collidedTimes += 1
+        #     return True
         
         return False
 
@@ -679,6 +699,7 @@ class DoraemonPlayer(SoccerPlayer):
         ((soccer.y + soccer.height >= self.y - 100) and (soccer.x >= self.x) and
         (soccer.x + soccer.width <= self.x + self.width - 3)) and soccer.BDY > 0):
             soccer.BDY *= -1
+            soccer.y -= 7
             self.collidedTimes += 1
             return True
 
@@ -1163,30 +1184,30 @@ def createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemo
         makeTextRect.center = (widthScreen//2, heightScreen//2)
 
     elif len(currentLeaderboard) == 1:
-        text = "Best Score: " + str(currentLeaderboard[0])
+        text = "1. " + str(currentLeaderboard[0])
         makeText = font.render(text, True, white)
         makeTextRect = makeText.get_rect()
-        makeTextRect.center = (widthScreen//2 - 15, heightScreen//2 - 15)
+        makeTextRect.center = (widthScreen//2 - 20, heightScreen//2 - 15)
         numText = 1
 
     elif len(currentLeaderboard) == 2:
-        text = "Best Score: " + str(currentLeaderboard[0])
-        text1 = "Second Best Score: " + str(currentLeaderboard[1])
+        text = "1. " + str(currentLeaderboard[0])
+        text1 = "2. " + str(currentLeaderboard[1])
 
         makeText = font.render(text, True, white)
         makeTextRect = makeText.get_rect()
-        makeTextRect.center = (widthScreen//2 - 10 , heightScreen//2 - 25)
+        makeTextRect.center = (widthScreen//2 - 20 , heightScreen//2 - 25)
 
         makeText1 = font.render(text1, True, white)
         makeTextRect1 = makeText.get_rect()
-        makeTextRect1.center = (widthScreen//2 - 75, heightScreen//2 + 20)
+        makeTextRect1.center = (widthScreen//2 - 20, heightScreen//2 + 20)
 
         numText = 2
 
     elif len(currentLeaderboard) >= 3:
-        text ="Best Score: " + str(currentLeaderboard[0])
-        text1 = "Second Best Score: " + str(currentLeaderboard[1])
-        text2 = "Third Best Score: " + str(currentLeaderboard[2])
+        text ="1. " + str(currentLeaderboard[0])
+        text1 = "2. " + str(currentLeaderboard[1])
+        text2 = "3. " + str(currentLeaderboard[2])
 
         makeText = font.render(text, True, white)
         makeTextRect = makeText.get_rect()
@@ -1194,11 +1215,11 @@ def createLeaderboardScreen(heightScreen, widthScreen, shinChanIntroImg, doraemo
 
         makeText1 = font.render(text1, True, white)
         makeTextRect1 = makeText.get_rect()
-        makeTextRect1.center = (widthScreen//2 - 75, heightScreen//2)
+        makeTextRect1.center = (widthScreen//2 - 20, heightScreen//2)
 
         makeText2 = font.render(text2, True, white)
         makeTextRect2 = makeText2.get_rect()
-        makeTextRect2.center = (widthScreen//2, heightScreen//2 + 50)
+        makeTextRect2.center = (widthScreen//2 - 20, heightScreen//2 + 50)
         numText = 3
 
     background = pygame.image.load("Instructions.jpg")
@@ -1928,9 +1949,20 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
             keyPressed = pygame.key.get_pressed()
             #this makes sure the player can move continously so that we do not have to press the key multiple times
             if not player.frozen:
+                
+                ###########################################@
+                #ONLY USE THE KEYS l AND w TO SKIP THE GAME#
+                ############################################
+                if keyPressed[pygame.K_l]:
+                    guestPlayer.goalCount = 4
+                    gameOver = True
+                 
+                if keyPressed[pygame.K_w]:
+                    player.goalCount = 4
+                    gameOver = True
 
                 if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
-                    player.x += 5.5   
+                    player.x += 5.5
                     player.rectangleX = player.x
             
             
@@ -1975,6 +2007,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
             screen.blit(playerImg, (player.x, player.y))
         else:
             screen.blit(doramiImg, (player.x, player.y))
+
         screen.blit(guestPlayerImg, (guestPlayer.x, guestPlayer.y))
         screen.blit(goalLeftImg, (0, heightScreen - goalHeight))
         screen.blit(goalRightImg, (widthScreen - goalWidth, heightScreen - goalHeight))
