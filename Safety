@@ -3,7 +3,7 @@
 # Carnegie Mellon University
 # Final Project: ShinDor Soccer
 # Code by: Alejandro Ruiz
-# Graphics by: Daniela Ruiz Gomez
+# Graphics by: Daniela Ruiz
 #####################################################################################
 
 
@@ -1949,9 +1949,20 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
             keyPressed = pygame.key.get_pressed()
             #this makes sure the player can move continously so that we do not have to press the key multiple times
             if not player.frozen:
+                
+                ###########################################@
+                #ONLY USE THE KEYS l AND w TO SKIP THE GAME#
+                ############################################
+                if keyPressed[pygame.K_l]:
+                    guestPlayer.goalCount = 4
+                    gameOver = True
+                 
+                if keyPressed[pygame.K_w]:
+                    player.goalCount = 4
+                    gameOver = True
 
                 if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
-                    player.x += 5.5   
+                    player.x += 5.5
                     player.rectangleX = player.x
             
             
@@ -1996,6 +2007,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
             screen.blit(playerImg, (player.x, player.y))
         else:
             screen.blit(doramiImg, (player.x, player.y))
+
         screen.blit(guestPlayerImg, (guestPlayer.x, guestPlayer.y))
         screen.blit(goalLeftImg, (0, heightScreen - goalHeight))
         screen.blit(goalRightImg, (widthScreen - goalWidth, heightScreen - goalHeight))
