@@ -1756,6 +1756,8 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
     global player
 
     singlePlayerScreen = True
+    lose = False
+    win = False
 
     if doramiChosen: 
         player = dorami
@@ -1783,6 +1785,16 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 lose_Sound = mixer.Sound("Sad Violin Airhorn.mp3")
                 win_Sound = mixer.Sound("Winning Sound.mp3")
 
+                
+                if guestPlayer.goalCount == 3:
+                    lose_Sound.play()
+                    lose = True
+
+                elif player.goalCount == 3:
+                    win_Sound.play()
+                    win = True
+
+                    
                 #create confetti
                 colorsDoraemon = [(102, 178, 255), (255, 255, 255)]
                 colorsShinChan = [(255,0,0), (255, 255, 0)]
@@ -1816,6 +1828,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 if not doramiChosen:
                     player.jumpHeightSecure = 8.5
                     player.jumpHeight = 8.5
+
                 elif doramiChosen:
                     player.jumpHeightSecure = 7
                     player.jumpHeight = 7
@@ -1830,17 +1843,11 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 fillLeaderboard()
 
                 
-                if guestPlayer.goalCount == 3:
-                    player.goalCount = 0
-                    guestPlayer.goalCount = 0
-                    lose_Sound.play()
+                if lose:
                     lose_Sound.stop()
                     loserScreen()
 
-                elif player.goalCount == 3:
-                    player.goalCount = 0
-                    guestPlayer.goalCount = 0
-                    win_Sound.play()
+                elif win:
                     win_Sound.stop()
                     winScreen()
                 
@@ -2033,6 +2040,8 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 pauseGame = not pauseGame
                 player.jumping = False
                 guestPlayer.jumping = False
+                guestPlayer.y = heightScreen - guestPlayer.height
+                player.y = heightScreen - player.height
 
             #quit the game
             if quitButton.pressed:
@@ -2068,6 +2077,8 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 soccer.y = heightScreen//2 - 20
                 guestPlayer.jumping = False
                 player.jumping = False
+                guestPlayer.y = heightScreen - guestPlayer.height
+                player.y = heightScreen - player.height
 
                 mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
 
@@ -2592,11 +2603,15 @@ def twoPlayerScreen():
                 pauseGame = not pauseGame
                 player.jumping = False
                 guestPlayer.jumping = False
+                guestPlayer.y = heightScreen - guestPlayer.height
+                player.y = heightScreen - player.height
 
             #quit the game
             if quitButton.pressed:
                 player.jumping = False
                 guestPlayer.jumping = False
+                guestPlayer.y = heightScreen - guestPlayer.height
+                player.y = heightScreen - player.height
                 pauseGame = not pauseGame
                 quitButton.pressed = False
                 speedImgShowing = False
@@ -2887,6 +2902,12 @@ def saveNobita(piano):
 
 #this screen will be showing when the user wins
 def winScreen():
+    global player
+    global guestPlayer
+
+    guestPlayer.goalCount = 0
+    player.goalCount = 0
+
     end_Sound = mixer.Sound("End Song.mp3")
     width = 1100
     height = 619
@@ -2906,6 +2927,7 @@ def winScreen():
     
     #https://www.uihere.com/free-cliparts/shinnosuke-nohara-crayon-shin-chan-kasukabe-character-shinchan-4248406/download
     shinChan = pygame.image.load("ShinChan End.png")
+    #https://downloads.khinsider.com/game-soundtracks/album/doraemon-snes
     background = pygame.image.load("Disco.jpg")
 
     text4t = "YOU WON!"
@@ -2954,11 +2976,17 @@ def winScreen():
         screen.blit(nobita, (width//2 - 50, height//2))
         screen.blit(dorami, (width//2 - 250, height//2))
         screen.blit(shinChan, (width//2  + 150, height//2))
-        screen.blit(doraemon, (width - 300, height -300))
+        screen.blit(doraemon, (45, height - 540))
         pygame.display.flip()
 
 #this will create the loser screen
 def loserScreen():
+    global player
+    global guestPlayer
+
+    guestPlayer.goalCount = 0
+    player.goalCount = 0
+
     red = (255, 0, 0)
     balck = (0, 0, 0)
     run = True
