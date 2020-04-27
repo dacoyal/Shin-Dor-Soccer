@@ -1778,10 +1778,6 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 player.y = heightScreen - player.height
                 lose_Sound = mixer.Sound("Sad Violin Airhorn.mp3")
                 win_Sound = mixer.Sound("Winning Sound.mp3")
-                if guestPlayer.goalCount == 3:
-                    lose_Sound.play()
-                elif player.goalCount == 3:
-                    win_Sound.play()
 
                 gameOver = False
                 scoreList = [guestPlayer.goalCount, player.goalCount]
@@ -1797,8 +1793,6 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 soccer.BDX = 0
                 player.x = widthScreen - goalWidth - player.width
                 guestPlayer.x = goalWidth + guestPlayer.width/2
-                player.goalCount = 0
-                guestPlayer.goalCount = 0
                 guestPlayer.extraSpeed = 0
                 player.extraSpeed = 0
 
@@ -1814,12 +1808,36 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 soccer.x = widthScreen//2
                 soccer.y = heightScreen//2 - 20
 
+                #create confetti
+                colorsDoraemon = [(102, 178, 255), (255, 255, 255)]
+                colorsShinChan = [(255,0,0), (255, 255, 0)]
+                for circle in range(3000):
+                    if player.goalCount == 3:
+                        color = colorsShinChan[random.randint(0, len(colorsShinChan) - 1)]
+                    else:
+                        color = colorsDoraemon[random.randint(0, len(colorsDoraemon) - 1)]
+                    pygame.draw.circle(screen, color, ((random.randint(widthScreen//2 -400, widthScreen//2 + 450)), random.randint(heightScreen//2 , heightScreen//2 + 300)), 2)
+       
 
                 pygame.time.wait(5000)
                 lose_Sound.stop()
                 fillLeaderboard()
+
                 
-                mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
+                if guestPlayer.goalCount == 3:
+                    player.goalCount = 0
+                    guestPlayer.goalCount = 0
+                    lose_Sound.play()
+                    lose_Sound.stop()
+                    loserScreen()
+
+                elif player.goalCount == 3:
+                    player.goalCount = 0
+                    guestPlayer.goalCount = 0
+                    win_Sound.play()
+                    win_Sound.stop()
+                    winScreen()
+                
             #check if one of the players has reached the maximum score allowed
             if (player.goalCount == 3 or guestPlayer.goalCount == 3) and not gameOver:
                 gameOver = True
@@ -1959,17 +1977,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         if guestPlayer.y + guestPlayer.height > heightScreen:
             guestPlayer.y = heightScreen - guestPlayer.height
         
-        #create confetti
-        if gameOver:
-            colorsDoraemon = [(102, 178, 255), (255, 255, 255)]
-            colorsShinChan = [(255,0,0), (255, 255, 0)]
-            for circle in range(3000):
-                if player.goalCount == 3:
-                    color = colorsShinChan[random.randint(0, len(colorsShinChan) - 1)]
-                else:
-                    color = colorsDoraemon[random.randint(0, len(colorsDoraemon) - 1)]
-                pygame.draw.circle(screen, color, ((random.randint(widthScreen//2 -400, widthScreen//2 + 450)), random.randint(heightScreen//2 , heightScreen//2 + 300)), 2)
-       
+        
         #pause part of the code
         if pauseGame:
 
@@ -2107,7 +2115,7 @@ def createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, gu
             AIlevel = "Medium"
             mediumButton.pressed = False
             createLevels = False
-            piano.pause()
+            piano.stop()
             createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
         
         levelScreen.blit(introBackgroundImg, topLeft)
@@ -2134,26 +2142,6 @@ def createGoalCount(player, guestPlayer, screen, widthScreen):
     screen.blit(scoreTextRight, scoreTextRightRectangle)
     screen.blit(scoreTextLeft, scoreTextLeftRectangle)
 
-####################################################
-############ Creates Won Screen ###################
-####################################################
-def createWonScreen(heightScreen, widthScreen):
-    displayWonScreen = True
-    wonScreenBackground = pygame.image.load("Goal Background.jpg")
-    wonScreenBackgroundTopLeft = (0,0)
-    red = (255, 0, 0)
-    text = "You won!"
-    textRect = text.get_rect()
-    textRect.center = (widthScreen//2, heightScreen//2)
-    wonScreen = pygame.display.set_mode((widthScreen, heightScreen))
-    
-    #goal screen loop
-    while displayWonScreen:
-        
-        wonScreen.blit(wonScreenBackground, wonScreenBackgroundTopLeft)
-
-
-        
 ##########################################
 ####### SUPER POWERS FUNCTIONS ###########
 ##########################################
@@ -2882,15 +2870,22 @@ def saveNobita(piano):
         pygame.display.flip()
 
 #this screen will be showing when the user wins
-def wonScreen():
+def winScreen():
+    end_Sound = mixer.Sound("End Song.mp3")
     width = 1100
     height = 619
     green = (0, 255, 0)
 
     run = True
     screen = pygame.display.set_mode((width, height))
+    
+    #https://favpng.com/png_search/doraemon-shizuka/3
     nobita = pygame.image.load("Nobita Happy Standing Resized.png")
+
+    #https://www.pngflow.com/en/free-transparent-png-mztuj
     dorami = pygame.image.load("Dorami End Resized.png")
+    
+    #https://www.uihere.com/free-cliparts/shinnosuke-nohara-crayon-shin-chan-kasukabe-character-shinchan-4248406/download
     shinChan = pygame.image.load("ShinChan End.png")
     background = pygame.image.load("Disco.jpg")
 
@@ -2899,7 +2894,7 @@ def wonScreen():
     text4Rect = text4.get_rect()
     text4Rect.center = (width//2 + 20, heightScreen//2 - 50 )
 
-    colorRect = (255, 255, 255)
+    colorRect = (0, 0, 0)
     colorText = (0, 255, 0)
 
     rectX, rectY = width//2 - 70, height//2 - 100
@@ -2907,9 +2902,12 @@ def wonScreen():
 
     while run:
 
+        end_Sound.play()
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 run = False
+                end_Sound.stop()
                 pygame.quit()
                 os._exit(0)
             
@@ -2920,11 +2918,14 @@ def wonScreen():
                 colorRect = green
             else:
                 text4 = font.render(text4t, True, green)
-                colorRect = (255, 255, 255)
+                colorRect = (0, 0, 0)
 
             #Press in the "YOU WON!" label to go back to the main menu
             if event.type == pygame.MOUSEBUTTONDOWN and (mouseCoordX >= rectX and mouseCoordX <= rectX + rectWidth and mouseCoordY >= rectY and mouseCoordY <+ rectY + rectHeight):
                 run = False
+                end_Sound.stop()
+                text4 = font.render(text4t, True, green)
+                colorRect = (0, 0, 0)
                 mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
 
 
@@ -2933,9 +2934,61 @@ def wonScreen():
         screen.blit(text4, text4Rect)
         screen.blit(nobita, (width//2 - 50, height//2))
         screen.blit(dorami, (width//2 - 250, height//2))
-        screen.blit(shinChan, (width//2  + 150, height//2 + 67))
+        screen.blit(shinChan, (width//2  + 150, height//2))
         pygame.display.flip()
 
+#this will create the loser screen
+def loserScreen():
+    red = (255, 0, 0)
+    balck = (0, 0, 0)
+    run = True
+
+    width = 801
+    height = 800
+
+    #Image from : https://www.vectorstock.com/royalty-free-vector/halloween-background-with-cemetery-in-full-moon-vector-22369104
+    background = pygame.image.load("Cementery.jpg")
+
+    nobita = pygame.image.load("Nobita Help Resized.png")
+    
+    text4t = "NOBITA DIED!"
+    text4 = font.render(text4t, True, red)
+    text4Rect = text4.get_rect()
+    text4Rect.center = (width//2, heightScreen//2 - 200)
+
+    rectX, rectY = width//2 - 125, heightScreen//2 - 230
+    rectWidth, rectHeight = 250, 60
+    topLeft = (0, 0)
+
+    colorRect = black
+    screen = pygame.display.set_mode((width, height))
+
+    while run:
+        screen.blit(background, topLeft)
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.quit()
+                os._exit(0)
+
+            mouseCoordX, mouseCoordY = (pygame.mouse.get_pos()[0], pygame.mouse.get_pos()[1])
+
+            if mouseCoordX >= rectX and mouseCoordX <= rectX + rectWidth and mouseCoordY >= rectY and mouseCoordY <+ rectY + rectHeight: 
+                text4 = font.render(text4t, True, black)
+                colorRect = red
+            else:
+                text4 = font.render(text4t, True, red)
+                colorRect = black
+
+            if event.type == pygame.MOUSEBUTTONDOWN and (mouseCoordX >= rectX and mouseCoordX <= rectX + rectWidth and mouseCoordY >= rectY and mouseCoordY <+ rectY + rectHeight):
+                text4 = font.render(text4t, True, red)
+                colorRect = black
+                mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
+
+        pygame.draw.rect(screen, colorRect, (rectX, rectY, rectWidth, rectHeight))
+        screen.blit(text4, text4Rect)
+        screen.blit(nobita, (width//2 - 400, height - 500))
+        pygame.display.flip()
 
 ################################################
 ################################################
