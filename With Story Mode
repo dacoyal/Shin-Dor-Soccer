@@ -1381,6 +1381,7 @@ def createPauseMenu(screen):
 ##############################################
 def mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
     global time
+    global piano
 
     introScreen = pygame.display.set_mode((widthScreen, heightScreen))
     firstDisplay = True
@@ -1426,7 +1427,7 @@ def mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, socc
             player.extraSpeed = 0
             time = 0
             doraemonMad()
-            createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer)
+           
 
         if startPlaying2PlayerButton.pressed:
             mixer.music.pause()
@@ -1465,6 +1466,7 @@ def mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, socc
 
 #we create this screen so that the music will not restart playing after hitting the go back to main screen after instructions
 def mainMenuAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton):
+    global piano
 
     introScreen = pygame.display.set_mode((widthScreen, heightScreen))
     firstDisplay = True
@@ -1511,8 +1513,8 @@ def mainMenuAfterInstructions(widthScreen, heightScreen, shinChanIntroImg, dorae
             guestPlayer.jumpHeightSecure = 8
             guestPlayer.jumpHeight = 8
             time = 0
-            createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer)
-            
+            doraemonMad()
+
         if startPlaying2PlayerButton.pressed:
             mixer.music.pause()
             firstDisplay = False
@@ -1729,7 +1731,7 @@ def mediumAI(cpu, soccer, widthScreen, goalWidth):
 ##################################################################
     
 #Create the screen that will be popped if we select "Single Player"
-def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer):
+def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer):
     global jumpImgShowing
     global yJumpImg
     global timeFrozen
@@ -1751,10 +1753,12 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
     global stadiumImg
     global doramiChosen
     global doramiImg
+    global player
 
     singlePlayerScreen = True
 
-    if doramiChosen: player = dorami
+    if doramiChosen: 
+        player = dorami
 
     while singlePlayerScreen:
         
@@ -1778,6 +1782,19 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 player.y = heightScreen - player.height
                 lose_Sound = mixer.Sound("Sad Violin Airhorn.mp3")
                 win_Sound = mixer.Sound("Winning Sound.mp3")
+
+                #create confetti
+                colorsDoraemon = [(102, 178, 255), (255, 255, 255)]
+                colorsShinChan = [(255,0,0), (255, 255, 0)]
+                for circle in range(3000):
+                    if player.goalCount == 3:
+                        color = colorsShinChan[random.randint(0, len(colorsShinChan) - 1)]
+                    else:
+                        color = colorsDoraemon[random.randint(0, len(colorsDoraemon) - 1)]
+                    pygame.draw.circle(screen, color, ((random.randint(widthScreen//2 -400, widthScreen//2 + 450)), random.randint(heightScreen//2 , heightScreen//2 + 300)), 2)
+                
+                    pygame.display.flip()
+
 
                 gameOver = False
                 scoreList = [guestPlayer.goalCount, player.goalCount]
@@ -1807,17 +1824,6 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 guestPlayer.jumpHeight = 8
                 soccer.x = widthScreen//2
                 soccer.y = heightScreen//2 - 20
-
-                #create confetti
-                colorsDoraemon = [(102, 178, 255), (255, 255, 255)]
-                colorsShinChan = [(255,0,0), (255, 255, 0)]
-                for circle in range(3000):
-                    if player.goalCount == 3:
-                        color = colorsShinChan[random.randint(0, len(colorsShinChan) - 1)]
-                    else:
-                        color = colorsDoraemon[random.randint(0, len(colorsDoraemon) - 1)]
-                    pygame.draw.circle(screen, color, ((random.randint(widthScreen//2 -400, widthScreen//2 + 450)), random.randint(heightScreen//2 , heightScreen//2 + 300)), 2)
-       
 
                 pygame.time.wait(5000)
                 lose_Sound.stop()
@@ -2025,6 +2031,8 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 jumpImgShowing = False
                 restartButton.pressed = False
                 pauseGame = not pauseGame
+                player.jumping = False
+                guestPlayer.jumping = False
 
             #quit the game
             if quitButton.pressed:
@@ -2059,6 +2067,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 soccer.x = widthScreen//2
                 soccer.y = heightScreen//2 - 20
                 guestPlayer.jumping = False
+                player.jumping = False
 
                 mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
 
@@ -2069,10 +2078,11 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
         pygame.display.flip()
 
 #screen where the user will be able to choose what level to play agains
-def createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, piano):
+def createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer):
     global AIlevel
     global easyButton
     global mediumButton
+    global piano
 
     introBackgroundImg = pygame.image.load("Instructions.jpg")
     topLeft = (0, 0)
@@ -2086,6 +2096,7 @@ def createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, gu
     makeTextRect = makeText.get_rect()
     makeTextRect.center = (widthScreen//2, 100)
 
+    piano.play()
     while createLevels:
 
         for event in pygame.event.get():
@@ -2109,14 +2120,14 @@ def createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, gu
             easyButton.pressed = False
             createLevels = False
             piano.stop()
-            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
+            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
 
         if mediumButton.pressed:
             AIlevel = "Medium"
             mediumButton.pressed = False
             createLevels = False
             piano.stop()
-            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
+            createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
         
         levelScreen.blit(introBackgroundImg, topLeft)
         easyButton.displayButton(levelScreen)
@@ -2351,6 +2362,18 @@ def twoPlayerScreen():
                     lose_Sound.play()
                 elif player.goalCount == 2:
                     win_Sound.play()
+
+                colorsDoraemon = [(102, 178, 255), (255, 255, 255)]
+                colorsShinChan = [(255,0,0), (255, 255, 0)]
+                #draw the confetti
+                for circle in range(3000):
+                    if player.goalCount == 2:
+                        color = colorsShinChan[random.randint(0, len(colorsShinChan) - 1)]
+                    else:
+                        color = colorsDoraemon[random.randint(0, len(colorsDoraemon) - 1)]
+                    pygame.draw.circle(screen, color, ((random.randint(widthScreen//2 -400, widthScreen//2 + 450)), random.randint(heightScreen//2 , heightScreen//2 + 300)), 2)
+                    pygame.display.flip()
+
                 play = False
                 gameOver = False
                 scoreList = [guestPlayer.goalCount, player.goalCount]
@@ -2526,16 +2549,6 @@ def twoPlayerScreen():
         if speedImgShowing:
             screen.blit(runFastImg, (speedX, speedY))
 
-        #create the confetti
-        if gameOver:
-            colorsDoraemon = [(102, 178, 255), (255, 255, 255)]
-            colorsShinChan = [(255,0,0), (255, 255, 0)]
-            for circle in range(3000):
-                if player.goalCount == 2:
-                    color = colorsShinChan[random.randint(0, len(colorsShinChan) - 1)]
-                else:
-                    color = colorsDoraemon[random.randint(0, len(colorsDoraemon) - 1)]
-                pygame.draw.circle(screen, color, ((random.randint(widthScreen//2 -400, widthScreen//2 + 450)), random.randint(heightScreen//2 , heightScreen//2 + 300)), 2)
 
         #pause part of the code
         if pauseGame:
@@ -2577,9 +2590,13 @@ def twoPlayerScreen():
                 jumpImgShowing = False
                 restartButton.pressed = False
                 pauseGame = not pauseGame
+                player.jumping = False
+                guestPlayer.jumping = False
 
             #quit the game
             if quitButton.pressed:
+                player.jumping = False
+                guestPlayer.jumping = False
                 pauseGame = not pauseGame
                 quitButton.pressed = False
                 speedImgShowing = False
@@ -2762,12 +2779,11 @@ def afterChoosingPlayer(widthScreen, heightScreen, shinChanIntroImg, doraemonInt
 
 #this draws the screen where doraemon appears mad next to nobita
 def doraemonMad():
+    global piano
+
     width = 1024
     height = 640
     screen = pygame.display.set_mode((width, height))
-
-    #https://www.thedarkpiano.com/creepy-piano-music
-    piano = mixer.Sound("Piano.mp3")
 
     #From: https://chatsticker.com/sticker/doraemons-many-emotions/19964
     #Drawn by Daniela Ruiz Gomez
@@ -2862,7 +2878,7 @@ def saveNobita(piano):
                 os._exit(0)
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, piano)
+                createAILevels(heightScreen, widthScreen, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, goalWidth, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer)
 
         screen.blit(text3, text3Rect)
         screen.blit(text4, text4Rect)
@@ -2875,9 +2891,12 @@ def winScreen():
     width = 1100
     height = 619
     green = (0, 255, 0)
-
+    
     run = True
     screen = pygame.display.set_mode((width, height))
+
+    #https://co.pinterest.com/pin/449515606542665350/
+    doraemon = pygame.image.load("Doraemon Triste Resized.png")
     
     #https://favpng.com/png_search/doraemon-shizuka/3
     nobita = pygame.image.load("Nobita Happy Standing Resized.png")
@@ -2935,6 +2954,7 @@ def winScreen():
         screen.blit(nobita, (width//2 - 50, height//2))
         screen.blit(dorami, (width//2 - 250, height//2))
         screen.blit(shinChan, (width//2  + 150, height//2))
+        screen.blit(doraemon, (width - 300, height -300))
         pygame.display.flip()
 
 #this will create the loser screen
@@ -2948,7 +2968,7 @@ def loserScreen():
 
     #Image from : https://www.vectorstock.com/royalty-free-vector/halloween-background-with-cemetery-in-full-moon-vector-22369104
     background = pygame.image.load("Cementery.jpg")
-
+    scream = mixer.Sound("Scream.mp3")
     nobita = pygame.image.load("Nobita Help Resized.png")
     
     text4t = "NOBITA DIED!"
@@ -2963,11 +2983,15 @@ def loserScreen():
     colorRect = black
     screen = pygame.display.set_mode((width, height))
 
+    scream.play()
+
     while run:
         screen.blit(background, topLeft)
         for event in pygame.event.get():
+            
             if event.type == pygame.QUIT:
                 run = False
+                scream.stop()
                 pygame.quit()
                 os._exit(0)
 
@@ -2983,6 +3007,7 @@ def loserScreen():
             if event.type == pygame.MOUSEBUTTONDOWN and (mouseCoordX >= rectX and mouseCoordX <= rectX + rectWidth and mouseCoordY >= rectY and mouseCoordY <+ rectY + rectHeight):
                 text4 = font.render(text4t, True, red)
                 colorRect = black
+                scream.stop()
                 mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg, incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
 
         pygame.draw.rect(screen, colorRect, (rectX, rectY, rectWidth, rectHeight))
@@ -3022,6 +3047,9 @@ pauseGame = False
 
 shinChanChosen = False
 doramiChosen = False
+
+#https://www.thedarkpiano.com/creepy-piano-music
+piano = mixer.Sound("Piano.mp3")
 
 while runPygame:
     #fillleaderboard before starting to play
