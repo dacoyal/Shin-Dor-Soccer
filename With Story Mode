@@ -314,7 +314,7 @@ class Ball(object):
 
 class SoccerPlayer(object):
 
-    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure):
+    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure, beenFreezed):
         self.width = width
         self.height = height
         self.x = x
@@ -328,6 +328,7 @@ class SoccerPlayer(object):
         self.collidedTimes = collidedTimes
         self.frozen = frozen
         self.jumpHeightSecure = jumpHeightSecure
+        self.beenFreezed = beenFreezed
 
     def jump(self, soccer):
         #if the jumpHeight varible is greater than 0 this means the y coordinate of our player should be less positive so that it moves upwards
@@ -534,8 +535,8 @@ class SoccerPlayer(object):
 #We will make the collisions a little bit different for Doraemon since he has a wider head and different body than Shin Chan
 class DoraemonPlayer(SoccerPlayer):
     #we can call the init function from our soccerPlayer class since it will take the same values
-    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure):
-        super().__init__(width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure)
+    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure, beenFreezed):
+        super().__init__(width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure, beenFreezed)
 
 
     def checkPlayerHittingBall(self, soccer, heightScreen, widthScreen):
@@ -715,8 +716,8 @@ class DoraemonPlayer(SoccerPlayer):
 #do the collisions for Dorami
 class DoramiPlayer(SoccerPlayer):
     #we can call the init function from our soccerPlayer class since it will take the same values
-    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure):
-        super().__init__(width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure)
+    def __init__(self, width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure, beenFreezed):
+        super().__init__(width, height, x, y, BDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecure, beenFreezed)
 
 
     def checkPlayerHittingBall(self, soccer, heightScreen, widthScreen):
@@ -957,9 +958,9 @@ jumpHeightDorami = 7
 jumpHeightSecureDorami = 7
 #let's create three objects, our player, the other player and the soccer ball
 soccer = Ball(soccerX, soccerY, soccerWidth, soccerHeight, soccerBDX, soccerBDY, friction, soccerGravity, airResistance)
-player = SoccerPlayer(playerWidth, playerHeight, playerX, playerY, playerBDY, jumping, jumpHeightPlayer, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, secureJumpHeightPlayer)
-guestPlayer = DoraemonPlayer(playerWidth, playerHeight, guestPlayerX, guestPlayerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, secureJumpHeight)
-dorami = DoramiPlayer(doramiWidth, doramiHeight, doramiX, doramiY, playerBDY, jumping, jumpHeightDorami, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecureDorami)
+player = SoccerPlayer(playerWidth, playerHeight, playerX, playerY, playerBDY, jumping, jumpHeightPlayer, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, secureJumpHeightPlayer, beenFreezed)
+guestPlayer = DoraemonPlayer(playerWidth, playerHeight, guestPlayerX, guestPlayerY, playerBDY, jumping, jumpHeight, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, secureJumpHeight, beenFreezed)
+dorami = DoramiPlayer(doramiWidth, doramiHeight, doramiX, doramiY, playerBDY, jumping, jumpHeightDorami, scoredGoal, goalCount, extraSpeed, collidedTimes, frozen, jumpHeightSecureDorami, beenFreezed)
 
 #############################################################################
 #THIS FUNCTION COMBINES A LOT OF THE FUNCTIONS ABOVE TO CHECK FOR A COLLISION AND FOR OUT OF BOUNDS
@@ -1838,6 +1839,9 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 jumpImgShowing = False
                 player.jumping = False
                 guestPlayer.jumping = False
+                player.beenFreezed = False
+                guestPlayer.beenFreezed = False
+
                 
                 soccer.BDY = 0
                 soccer.BDX = 0
@@ -1934,10 +1938,9 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
             if isinstance(possibleTimeFrozen, int):
                 timeFrozen = possibleTimeFrozen
             
-            if isinstance(timeFrozen, int) and (time - timeFrozen) == 150:
+            if isinstance(timeFrozen, int) and (time - timeFrozen) == 75:
                 player.frozen = False
                 guestPlayer.frozen = False
-                beenFreezed = True
 
             if AIlevel == "Easy":
                 applyBasicIntelligence(guestPlayer, soccer, widthScreen, goalWidth)
@@ -2054,6 +2057,8 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 guestPlayer.goalCount = 0
                 guestPlayer.extraSpeed = 0
                 player.extraSpeed = 0
+                player.beenFreezed = False
+                guestPlayer.beenFreezed = False
 
                 if not doramiChosen:
                     player.jumpHeightSecure = 8.5
@@ -2087,6 +2092,8 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 speedImgShowing = False
                 jumpImgShowing = False
                 player.jumping = False
+                player.beenFreezed = False
+                guestPlayer.beenFreezed = False
                 soccer.BDY = 0
                 soccer.BDX = 0
                 player.x = widthScreen - goalWidth - player.width
@@ -2268,19 +2275,17 @@ def applyGetFrozen(player, guestPlayer, time, screen):
     textFrozenRect.center = (widthScreen//2, 300)
 
     if ((player.goalCount - guestPlayer.goalCount) % 3 == 0 and player.goalCount + guestPlayer.goalCount != 0 and not guestPlayer.frozen
-    and player.goalCount > guestPlayer.goalCount and not beenFreezed):
+    and player.goalCount > guestPlayer.goalCount and not guestPlayer.beenFreezed):
         guestPlayer.frozen = True
         timeFrozen = time
-        beenFreezed = True
-        #screen.blit(textFrozenRect, (widthScreen//2 - 20, 300))
+        guestPlayer.beenFreezed = True
         return timeFrozen
 
     elif ((guestPlayer.goalCount - player.goalCount) % 3 == 0 and player.goalCount + guestPlayer.goalCount != 0 and not player.frozen 
-    and guestPlayer.goalCount > player.goalCount and not beenFreezed) :
+    and guestPlayer.goalCount > player.goalCount and not player.beenFreezed) :
         player.frozen = True
         timeFrozen = time
-        beenFreezed = True
-        #screen.blit(textFrozenRect, (widthScreen//2 - 20, 300))
+        player.beenFreezed = True
         return timeFrozen
 
 
@@ -2438,6 +2443,8 @@ def twoPlayerScreen():
                 jumpImgShowing = False
                 player.jumping = False
                 guestPlayer.jumping = False
+                player.beenFreezed = False
+                guestPlayer.beenFreezed = False
                 fillLeaderboard()
                 AIlevel = None
 
@@ -2517,7 +2524,6 @@ def twoPlayerScreen():
             if isinstance(timeFrozen, int) and (time - timeFrozen) == 150:
                 player.frozen = False
                 guestPlayer.frozen = False
-                beenFreezed = True
             
 
             clock.tick(10000)
@@ -2632,8 +2638,14 @@ def twoPlayerScreen():
                 guestPlayer.goalCount = 0
                 guestPlayer.extraSpeed = 0
                 player.extraSpeed = 0
-                player.jumpHeightSecure = 8.5
-                player.jumpHeight = 8.5
+
+                if doramiChosen:
+                    player.jumpHeightSecure = 7
+                    player.jumpHeight = 7
+                elif not doramiChosen:
+                    player.jumpHeightSecure = 8.5
+                    player.jumpHeight = 8.5
+                
                 guestPlayer.jumpHeightSecure = 8
                 guestPlayer.jumpHeight = 8
                 soccer.x = widthScreen//2
@@ -2646,6 +2658,8 @@ def twoPlayerScreen():
                 guestPlayer.jumping = False
                 guestPlayer.y = heightScreen - guestPlayer.height
                 player.y = heightScreen - player.height
+                player.beenFreezed = False
+                guestPlayer.beenFreezed = False
 
             #quit the game
             if quitButton.pressed:
@@ -2657,6 +2671,8 @@ def twoPlayerScreen():
                 quitButton.pressed = False
                 speedImgShowing = False
                 jumpImgShowing = False
+                player.beenFreezed = False
+                guestPlayer.beenFreezed = False
                 play = False
                 soccer.BDY = 0
                 soccer.BDX = 0
@@ -2666,8 +2682,14 @@ def twoPlayerScreen():
                 guestPlayer.goalCount = 0
                 guestPlayer.extraSpeed = 0
                 player.extraSpeed = 0
-                player.jumpHeightSecure = 8.5
-                player.jumpHeight = 8.5
+
+                if doramiChosen:
+                    player.jumpHeightSecure = 7
+                    player.jumpHeight = 7
+                elif not doramiChosen:
+                    player.jumpHeightSecure = 8.5
+                    player.jumpHeight = 8.5
+
                 guestPlayer.jumpHeight = 8
                 soccer.x = widthScreen//2
                 soccer.y = heightScreen//2 - 20
