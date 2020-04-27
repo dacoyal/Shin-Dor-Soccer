@@ -275,7 +275,7 @@ class Ball(object):
             player.goalCount += 1
             goal_Sound = mixer.Sound("Goal Audio.mp3")
             
-            if player.goalCount != 1:
+            if player.goalCount != 4:
                 goal_Sound.play()
 
     
@@ -301,7 +301,7 @@ class Ball(object):
             player.jumpHeight = player.jumpHeightSecure
             goal_Sound = mixer.Sound("Goal Audio.mp3")
 
-            if guestPlayer.goalCount != 1:
+            if guestPlayer.goalCount != 4:
                 goal_Sound.play()
     
     
@@ -1262,7 +1262,7 @@ def createInstructionsScreen(heightScreen, widthScreen, shinChanIntroImg, doraem
     red = (255, 0, 0)
     coral = (255,127,80)
 
-    instructions = "Score 7 goals to win!" 
+    instructions = "Score 4 goals to win!" 
     instructionsText = font.render(instructions, True, white)
     instructionsRect = instructionsText.get_rect()
     instructionsRect.center = (200, 50)
@@ -1786,11 +1786,11 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 win_Sound = mixer.Sound("Winning Sound.mp3")
 
                 
-                if guestPlayer.goalCount == 3:
+                if guestPlayer.goalCount == 4:
                     lose_Sound.play()
                     lose = True
 
-                elif player.goalCount == 3:
+                elif player.goalCount == 4:
                     win_Sound.play()
                     win = True
 
@@ -1799,7 +1799,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                 colorsDoraemon = [(102, 178, 255), (255, 255, 255)]
                 colorsShinChan = [(255,0,0), (255, 255, 0)]
                 for circle in range(3000):
-                    if player.goalCount == 3:
+                    if player.goalCount == 4:
                         color = colorsShinChan[random.randint(0, len(colorsShinChan) - 1)]
                     else:
                         color = colorsDoraemon[random.randint(0, len(colorsDoraemon) - 1)]
@@ -1852,7 +1852,7 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
                     winScreen()
                 
             #check if one of the players has reached the maximum score allowed
-            if (player.goalCount == 3 or guestPlayer.goalCount == 3) and not gameOver:
+            if (player.goalCount == 4 or guestPlayer.goalCount == 4) and not gameOver:
                 gameOver = True
                 timeWonGame = time
                 player.frozen = True
@@ -1930,12 +1930,12 @@ def createScreenSinglePlayer(heightScreen, widthScreen, screen, epsilon, clock, 
             if not player.frozen:
 
                 if keyPressed[pygame.K_RIGHT] and player.x + player.width <= widthScreen - goalWidth + player.width:   #the purpose of the and is to ensure the player does not go outside of the right bound
-                    player.x += 6     
+                    player.x += 5.5   
                     player.rectangleX = player.x
             
             
                 if keyPressed[pygame.K_LEFT] and player.x >= goalWidth - player.width + 20:         #the purpose of the and is to ensure the player does not go outside of the left bound
-                    player.x -= 6                      #0.15
+                    player.x -= 5.5                      #0.15
                     player.rectangleX = player.x
                 
                 if not player.jumping and keyPressed[pygame.K_UP]:    #by putting this statement we ensure the player cannot jump while it is alredy jumping
@@ -2211,9 +2211,17 @@ def applyExtraSpeed(player, guestPlayer, time, screen):
 #applies super jump to the player who is hitting the ball more often, aka being more engaging
 def applySuperJump(player, guestPlayer, time, superJumpImg, screen, x, y):
     global jumpImgShowing
-    if time % 200 == 0 and not jumpImgShowing and time != 0 and not player.jumpHeightSecure == 9 and not guestPlayer.jumpHeightSecure == 8.5:
-        screen.blit(superJumpImg, (x,y))
-        jumpImgShowing = True
+    global doramiChosen
+
+    if doramiChosen:
+        if time % 200 == 0 and not jumpImgShowing and time != 0 and not player.jumpHeightSecure == 7.5 and not guestPlayer.jumpHeightSecure == 8.5:
+            screen.blit(superJumpImg, (x,y))
+            jumpImgShowing = True
+
+    elif not doramiChosen:
+        if time % 200 == 0 and not jumpImgShowing and time != 0 and not player.jumpHeightSecure == 9 and not guestPlayer.jumpHeightSecure == 8.5:
+            screen.blit(superJumpImg, (x,y))
+            jumpImgShowing = True
 
 
 #if someone is losing by 3 they get frozen by a certain amount of time
@@ -2369,16 +2377,16 @@ def twoPlayerScreen():
                 # player.y = heightScreen - player.height
                 lose_Sound = mixer.Sound("Sad Violin Airhorn.mp3")
                 win_Sound = mixer.Sound("Winning Sound.mp3")
-                if guestPlayer.goalCount == 2:
+                if guestPlayer.goalCount == 4:
                     lose_Sound.play()
-                elif player.goalCount == 2:
+                elif player.goalCount == 4:
                     win_Sound.play()
 
                 colorsDoraemon = [(102, 178, 255), (255, 255, 255)]
                 colorsShinChan = [(255,0,0), (255, 255, 0)]
                 #draw the confetti
                 for circle in range(3000):
-                    if player.goalCount == 2:
+                    if player.goalCount == 4:
                         color = colorsShinChan[random.randint(0, len(colorsShinChan) - 1)]
                     else:
                         color = colorsDoraemon[random.randint(0, len(colorsDoraemon) - 1)]
@@ -2413,7 +2421,7 @@ def twoPlayerScreen():
                 lose_Sound.stop()
                 mainMenu(widthScreen, heightScreen, shinChanIntroImg, doraemonIntroImg, soccerIntroImg, startPlaying2PlayerButton, startPlayingAIButton, screen, epsilon, clock, player, guestPlayer, soccer, soccerImg, playerImg, guestPlayerImg, goalLeftImg, goalRightImg, xJumpImg,incrementJumpPlayer, incrementJumpGuestPlayer, startInstructions, leaderboardButton)
             #check if one of the players has reached the maximum score allowed
-            if (player.goalCount == 2 or guestPlayer.goalCount == 2) and not gameOver:
+            if (player.goalCount == 4 or guestPlayer.goalCount == 4) and not gameOver:
                 player.frozen = True
                 guestPlayer.frozen = True
                 gameOver = True
