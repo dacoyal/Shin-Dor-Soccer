@@ -1,1 +1,1 @@
-These aret the images I used for my project
+These are the images I used for my project
